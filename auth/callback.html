@@ -3,34 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autenticación - ReviewMC</title>
+    <title>Autenticando - ReviewMC</title>
+    <link rel="stylesheet" href="./css/main.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: #000;
-            color: white;
-            font-family: 'Inter', sans-serif;
+        .callback-container {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
             text-align: center;
-        }
-        
-        .container {
-            max-width: 500px;
             padding: 2rem;
         }
         
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(6, 182, 212, 0.3);
-            border-top: 3px solid #06b6d4;
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(6, 182, 212, 0.3);
+            border-top: 4px solid var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .callback-message {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .callback-submessage {
+            color: var(--text-secondary);
+            font-size: 1rem;
         }
         
         @keyframes spin {
@@ -38,28 +43,120 @@
             100% { transform: rotate(360deg); }
         }
         
-        h1 {
-            color: #06b6d4;
+        .success-icon {
+            color: #10b981;
+            font-size: 3rem;
             margin-bottom: 1rem;
+        }
+        
+        .error-icon {
+            color: #ef4444;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .back-button {
+            margin-top: 2rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="spinner"></div>
-        <h1>Procesando autenticación...</h1>
-        <p>Por favor espera mientras te conectamos con Discord.</p>
-        <p>Serás redirigido automáticamente.</p>
+    <div class="min-h-screen w-full relative bg-black">
+        <!-- Ocean Abyss Background with Enhanced Glow -->
+        <div class="background-glow"></div>
+        <div class="floating-particles"></div>
+        
+        <div class="callback-container">
+            <div id="loading-state">
+                <div class="loading-spinner"></div>
+                <div class="callback-message">Autenticando con Discord...</div>
+                <div class="callback-submessage">Por favor espera, serás redirigido automáticamente</div>
+            </div>
+            
+            <div id="success-state" style="display: none;">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="callback-message">¡Autenticación exitosa!</div>
+                <div class="callback-submessage">Redirigiendo a ReviewMC...</div>
+                <a href="/" class="back-button">Volver al Inicio</a>
+            </div>
+            
+            <div id="error-state" style="display: none;">
+                <div class="error-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="callback-message">Error en la autenticación</div>
+                <div class="callback-submessage" id="error-message">Ha ocurrido un error al conectar con Discord</div>
+                <a href="/" class="back-button">Volver al Inicio</a>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Este archivo solo procesa el callback y redirige
-        setTimeout(() => {
-            // Verificar si ya se procesó la autenticación
-            if (!window.location.search.includes('code=')) {
-                window.location.href = '/';
+        // Manejar la respuesta de autenticación de Discord
+        document.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash;
+            const params = new URLSearchParams(hash.substring(1));
+            const accessToken = params.get('access_token');
+            const error = params.get('error');
+            const errorDescription = params.get('error_description');
+            
+            const loadingState = document.getElementById('loading-state');
+            const successState = document.getElementById('success-state');
+            const errorState = document.getElementById('error-state');
+            const errorMessage = document.getElementById('error-message');
+            
+            if (accessToken) {
+                // Autenticación exitosa
+                console.log('Token recibido:', accessToken);
+                
+                // Guardar el token en localStorage
+                localStorage.setItem('discord_token', accessToken);
+                
+                // Mostrar estado de éxito
+                loadingState.style.display = 'none';
+                successState.style.display = 'block';
+                
+                // Redirigir después de 2 segundos
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+                
+            } else if (error) {
+                // Error en la autenticación
+                console.error('Error de autenticación:', error, errorDescription);
+                
+                // Mostrar estado de error
+                loadingState.style.display = 'none';
+                errorState.style.display = 'block';
+                
+                if (errorDescription) {
+                    errorMessage.textContent = decodeURIComponent(errorDescription);
+                }
+                
+            } else {
+                // No hay token ni error, algo salió mal
+                console.error('No se recibió token ni error en la URL');
+                loadingState.style.display = 'none';
+                errorState.style.display = 'block';
+                errorMessage.textContent = 'No se pudo completar la autenticación. Intenta nuevamente.';
             }
-        }, 2000);
+        });
     </script>
 </body>
 </html>
