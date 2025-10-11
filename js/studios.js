@@ -5,26 +5,69 @@ const studiosData = [
         name: "MegePixel",
         image: "./img/studios/studio1.jpg",
         category: "Diseño & Desarrollo",
-        customBackground: "./img/port/prueba.jpeg", // Ruta de la imagen de fondo
-        hasCustomBg: true // Activar fondo personalizado para esta tarjeta
+        description: "Especialistas en diseño web y desarrollo de aplicaciones modernas. Creamos experiencias digitales únicas que impulsan tu negocio.",
+        customBackground: "./img/port/prueba.jpeg",
+        hasCustomBg: true,
+        details: {
+            founded: "2020",
+            location: "Madrid, España",
+            specialties: ["Diseño Web", "Desarrollo App", "UI/UX"],
+            website: "https://megepixel.com"
+        },
+        reviews: [
+            {
+                author: "Ana García",
+                date: "2024-01-15",
+                rating: 5,
+                comment: "Excelente trabajo en nuestro sitio web. Muy profesionales y creativos."
+            },
+            {
+                author: "Carlos López",
+                date: "2024-01-10",
+                rating: 4,
+                comment: "Buen servicio, entrega puntual. Recomendado."
+            }
+        ]
     },
     {
         id: 2,
         name: "Digital Creations",
         image: "./img/studios/prueba.jpg",
         category: "Marketing Digital",
+        description: "Agencia de marketing digital especializada en estrategias de crecimiento y posicionamiento online para marcas.",
         customBackground: "./img/port/default.jpeg",
-        hasCustomBg: false // Fondo desactivado
+        hasCustomBg: false,
+        details: {
+            founded: "2019",
+            location: "Barcelona, España",
+            specialties: ["SEO", "Redes Sociales", "Email Marketing"],
+            website: "https://digitalcreations.com"
+        },
+        reviews: [
+            {
+                author: "María Rodríguez",
+                date: "2024-01-08",
+                rating: 5,
+                comment: "Increíble aumento en nuestro tráfico orgánico. Muy satisfechos."
+            }
+        ]
     },
     {
         id: 3,
         name: "Tech Solutions",
         image: "./img/studios/prueba.jpg",
         category: "Consultoría IT",
+        description: "Consultoría tecnológica especializada en transformación digital y soluciones empresariales innovadoras.",
         customBackground: "./img/port/default.jpeg",
-        hasCustomBg: false // Fondo desactivado
-    },
-    
+        hasCustomBg: false,
+        details: {
+            founded: "2018",
+            location: "Valencia, España",
+            specialties: ["Consultoría", "Cloud", "Ciberseguridad"],
+            website: "https://techsolutions.com"
+        },
+        reviews: []
+    }
 ];
 
 // Configuración de JSONBin.io
@@ -236,6 +279,14 @@ function createStudioCard(studio, ratings) {
     const stars = createStars(studioRating.averageRating);
     ratingContainer.appendChild(stars);
     
+    // Agregar evento de clic para redirigir a view.html
+    card.addEventListener('click', function() {
+        window.location.href = `view.html?id=${studio.id}`;
+    });
+    
+    // Agregar cursor pointer para indicar que es clickeable
+    card.style.cursor = 'pointer';
+    
     return card;
 }
 
@@ -337,3 +388,4 @@ window.studiosData = studiosData;
 window.loadStudios = loadStudios;
 window.addReview = addReview;
 window.syncWithJsonBin = syncWithJsonBin;
+window.getLocalRatings = getLocalRatings;
