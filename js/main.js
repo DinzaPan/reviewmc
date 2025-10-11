@@ -1,22 +1,27 @@
-// Archivo JavaScript principal mejorado
+// Archivo JavaScript principal mejorado con sistema de perfil
 document.addEventListener('DOMContentLoaded', function() {
     console.log('ReviewMC website loaded successfully');
     
     // Inicializar efectos de partículas
     initParticles();
     
-    // Efectos interactivos para el perfil de usuario - Animación corregida
+    // Configurar event listeners del sidebar
+    setupSidebarEvents();
+    
+    // Efectos interactivos para el perfil de usuario
     const profileCircle = document.querySelector('.profile-circle');
     if (profileCircle) {
-        profileCircle.addEventListener('click', function() {
-            // Animación suave como antes
+        profileCircle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openProfileSidebar();
+            
+            // Animación suave
             this.style.transform = 'scale(1.1)';
             setTimeout(() => {
                 this.style.transform = 'scale(1.1)';
             }, 200);
             
             console.log('Perfil de usuario clickeado');
-            // Aquí puedes agregar más funcionalidad
         });
         
         // Restaurar animación hover original
@@ -81,6 +86,131 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Configurar eventos del sidebar
+function setupSidebarEvents() {
+    // Cerrar sidebar al hacer clic en el overlay
+    const overlay = document.getElementById('sidebar-overlay');
+    if (overlay) {
+        overlay.addEventListener('click', closeProfileSidebar);
+    }
+    
+    // Cerrar sidebar con el botón de cerrar
+    const closeBtn = document.getElementById('sidebar-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeProfileSidebar);
+    }
+    
+    // Cerrar sidebar al presionar Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeProfileSidebar();
+            
+            // También cerrar modales si están abiertos
+            const modals = document.querySelectorAll('.modal.active');
+            modals.forEach(modal => {
+                modal.classList.remove('active');
+            });
+        }
+    });
+    
+    // Configurar eventos para los items del menú
+    setupMenuEvents();
+}
+
+// Configurar eventos del menú
+function setupMenuEvents() {
+    // Inicio - Cerrar sidebar
+    const menuHome = document.getElementById('menu-home');
+    if (menuHome) {
+        menuHome.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeProfileSidebar();
+        });
+    }
+    
+    // Créditos - Mostrar modal de créditos
+    const menuCredits = document.getElementById('menu-credits');
+    if (menuCredits) {
+        menuCredits.addEventListener('click', function(e) {
+            e.preventDefault();
+            showCreditsModal();
+        });
+    }
+    
+    // Cómo Unirte - Mostrar modal de unirse
+    const menuJoin = document.getElementById('menu-join');
+    if (menuJoin) {
+        menuJoin.addEventListener('click', function(e) {
+            e.preventDefault();
+            showJoinModal();
+        });
+    }
+    
+    // Configurar cierre de modales
+    setupModalClosures();
+}
+
+// Configurar cierre de modales
+function setupModalClosures() {
+    // Cerrar modal de créditos
+    const creditsClose = document.getElementById('credits-close');
+    if (creditsClose) {
+        creditsClose.addEventListener('click', function() {
+            closeModal('credits-modal');
+        });
+    }
+    
+    // Cerrar modal de unirse
+    const joinClose = document.getElementById('join-close');
+    if (joinClose) {
+        joinClose.addEventListener('click', function() {
+            closeModal('join-modal');
+        });
+    }
+    
+    // Cerrar modales al hacer clic fuera
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                const modal = this.closest('.modal');
+                if (modal) {
+                    modal.classList.remove('active');
+                }
+            }
+        });
+    });
+}
+
+// Mostrar modal de créditos
+function showCreditsModal() {
+    closeProfileSidebar();
+    setTimeout(() => {
+        const modal = document.getElementById('credits-modal');
+        if (modal) {
+            modal.classList.add('active');
+        }
+    }, 300);
+}
+
+// Mostrar modal de cómo unirse
+function showJoinModal() {
+    closeProfileSidebar();
+    setTimeout(() => {
+        const modal = document.getElementById('join-modal');
+        if (modal) {
+            modal.classList.add('active');
+        }
+    }, 300);
+}
+
+// Cerrar modal específico
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
 // Función para inicializar efectos de partículas
 function initParticles() {
     const particlesContainer = document.querySelector('.floating-particles');
@@ -124,5 +254,188 @@ style.textContent = `
             opacity: 0;
         }
     }
+    
+    /* Estilos adicionales para mejoras visuales */
+    .studio-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .profile-circle {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Mejoras de accesibilidad para focus */
+    .menu-item:focus,
+    .sidebar-close:focus,
+    .modal-close:focus {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+    }
+    
+    /* Mejoras de rendimiento para animaciones */
+    @media (prefers-reduced-motion: reduce) {
+        .studio-card,
+        .profile-circle,
+        .studio-image,
+        .star {
+            transition: none !important;
+            animation: none !important;
+        }
+    }
 `;
 document.head.appendChild(style);
+
+// Funciones globales para manejar el sidebar
+function openProfileSidebar() {
+    const sidebar = document.getElementById('profile-sidebar');
+    if (sidebar) {
+        sidebar.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+    }
+}
+
+function closeProfileSidebar() {
+    const sidebar = document.getElementById('profile-sidebar');
+    if (sidebar) {
+        sidebar.classList.remove('active');
+        document.body.style.overflow = ''; // Restaurar scroll del body
+    }
+}
+
+// Mejora: Cerrar sidebar al hacer clic fuera
+document.addEventListener('click', function(e) {
+    const sidebar = document.getElementById('profile-sidebar');
+    const profileButton = document.getElementById('profile-button');
+    
+    if (sidebar && sidebar.classList.contains('active') && 
+        !sidebar.contains(e.target) && 
+        !profileButton.contains(e.target)) {
+        closeProfileSidebar();
+    }
+});
+
+// Mejora: Manejar redimensionamiento de ventana
+window.addEventListener('resize', function() {
+    // Cerrar sidebar en dispositivos móviles al redimensionar
+    if (window.innerWidth < 768) {
+        const sidebar = document.getElementById('profile-sidebar');
+        if (sidebar && sidebar.classList.contains('active')) {
+            closeProfileSidebar();
+        }
+    }
+});
+
+// Mejora: Prevenir múltiples clics rápidos
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Aplicar debounce a funciones críticas
+const debouncedCloseSidebar = debounce(closeProfileSidebar, 100);
+const debouncedOpenSidebar = debounce(openProfileSidebar, 100);
+
+// Mejora: Manejar estado de carga mejorado
+function showGlobalLoading(message = 'Cargando...') {
+    // Implementar un sistema de loading global si es necesario
+    console.log('Loading:', message);
+}
+
+function hideGlobalLoading() {
+    console.log('Loading complete');
+}
+
+// Mejora: Sistema de notificaciones mejorado
+function showNotification(message, type = 'info', duration = 4000) {
+    const notification = document.createElement('div');
+    const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        info: '#3b82f6',
+        warning: '#f59e0b'
+    };
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: ${colors[type] || colors.info};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 3000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+        max-width: 300px;
+        word-wrap: break-word;
+        font-family: inherit;
+    `;
+    
+    notification.textContent = message;
+    notification.className = 'global-notification';
+    
+    document.body.appendChild(notification);
+    
+    // Animación de entrada
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Remover después del tiempo especificado
+    setTimeout(() => {
+        notification.style.transform = 'translateX(400px)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, duration);
+}
+
+// Exportar funciones globalmente
+window.openProfileSidebar = openProfileSidebar;
+window.closeProfileSidebar = closeProfileSidebar;
+window.showNotification = showNotification;
+window.showGlobalLoading = showGlobalLoading;
+window.hideGlobalLoading = hideGlobalLoading;
+
+// Inicialización adicional cuando todo esté cargado
+window.addEventListener('load', function() {
+    console.log('ReviewMC completamente cargado');
+    
+    // Verificar si hay usuario autenticado y actualizar UI
+    if (window.discordAuth && typeof window.discordAuth.updateUI === 'function') {
+        setTimeout(() => {
+            window.discordAuth.updateUI();
+        }, 100);
+    }
+    
+    // Mejora: Añadir clase loaded para transiciones suaves después de la carga
+    document.body.classList.add('loaded');
+});
+
+// Manejar errores no capturados
+window.addEventListener('error', function(e) {
+    console.error('Error no capturado:', e.error);
+    showNotification('Ha ocurrido un error inesperado', 'error');
+});
+
+// Mejora: Prevenir comportamientos no deseados en touch devices
+document.addEventListener('touchstart', function(e) {
+    // Prevenir zoom en elementos interactivos
+    if (e.target.classList.contains('menu-item') || 
+        e.target.classList.contains('profile-circle') ||
+        e.target.closest('.studio-card')) {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }
+}, { passive: false });
