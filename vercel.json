@@ -2,7 +2,26 @@
   "rewrites": [
     {
       "source": "/auth/callback",
-      "destination": "/index.html"
+      "destination": "/callback.html"
+    },
+    {
+      "source": "/callback",
+      "destination": "/callback.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
     }
   ]
 }
