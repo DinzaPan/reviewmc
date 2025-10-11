@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReviewMC</title>
+    <link rel="stylesheet" href="./css/main.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="min-h-screen w-full relative bg-black">
+        <!-- Ocean Abyss Background with Enhanced Glow -->
+        <div class="background-glow"></div>
+        <div class="floating-particles"></div>
+        
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="nav-content">
+                <div class="logo-container">
+                    <img src="./img/logo.png" alt="ReviewMC Logo" class="logo">
+                    <h1 class="site-title">ReviewMC</h1>
+                </div>
+                <div class="user-profile">
+                    <div class="profile-circle">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Main Content Area -->
+        <main class="content">
+            <div class="content-header">
+                <h2 class="section-title">Reseña al Mejor Studio</h2>
+                <p class="section-subtitle">Descubre los mejores estudios calificados por nuestra comunidad</p>
+            </div>
+            
+            <div class="studios-grid" id="studios-container">
+                <!-- Las tarjetas de negocios se cargarán aquí dinámicamente -->
+            </div>
+        </main>
+    </div>
+    
+    <script src="./js/studios.js"></script>
+    <script src="./js/main.js"></script>
+</body>
+</html>
