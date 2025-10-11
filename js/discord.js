@@ -2,7 +2,7 @@
 class DiscordAuth {
     constructor() {
         this.clientId = '1397262934601896129'; // Reemplaza con tu Client ID de Discord
-        this.redirectUri = 'https://reviewmc.vercel.app/auth/callback'; // Cambia por tu URL de Vercel
+        this.redirectUri = window.location.origin + '/callback.html'; // URL dinámica para callback
         this.scope = 'identify email';
         this.token = null;
         this.user = null;
@@ -21,37 +21,40 @@ class DiscordAuth {
             this.updateUI();
         }
         
-        // Manejar callback de autenticación
-        this.handleAuthCallback();
+        // Verificar si estamos en la página de callback
+        if (window.location.pathname.includes('callback.html')) {
+            this.handleCallbackPage();
+        }
+    }
+
+    // Manejar la página de callback
+    handleCallbackPage() {
+        // Esta función se ejecuta solo en callback.html
+        // La lógica principal está en callback.html
+        console.log('En página de callback de Discord');
     }
 
     // Iniciar sesión con Discord
     login() {
-        const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(this.redirectUri)}&response_type=token&scope=${encodeURIComponent(this.scope)}`;
+        const state = this.generateState();
+        localStorage.setItem('discord_auth_state', state);
+        
+        const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(this.redirectUri)}&response_type=token&scope=${encodeURIComponent(this.scope)}&state=${state}`;
         window.location.href = authUrl;
     }
 
-    // Manejar el callback de autenticación
-    handleAuthCallback() {
-        const hash = window.location.hash;
-        if (hash) {
-            const params = new URLSearchParams(hash.substring(1));
-            const accessToken = params.get('access_token');
-            
-            if (accessToken) {
-                this.token = accessToken;
-                localStorage.setItem('discord_token', accessToken);
-                this.fetchUserProfile();
-                
-                // Limpiar URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-        }
+    // Generar estado para prevenir CSRF
+    generateState() {
+        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     }
 
     // Obtener perfil del usuario de Discord
     async fetchUserProfile() {
         try {
+            if (!this.token) {
+                throw new Error('No hay token disponible');
+            }
+
             const response = await fetch('https://discord.com/api/users/@me', {
                 headers: {
                     'Authorization': `Bearer ${this.token}`
@@ -71,6 +74,7 @@ class DiscordAuth {
             }
         } catch (error) {
             console.error('Error fetching user profile:', error);
+            this.showNotification('Error al cargar el perfil', 'error');
             this.logout();
         }
     }
@@ -94,7 +98,7 @@ class DiscordAuth {
         
         if (!profileCircle) return;
 
-        if (this.user) {
+        if (this.user && this.token) {
             // Usuario logueado - mostrar avatar
             const avatarUrl = this.user.avatar 
                 ? `https://cdn.discordapp.com/avatars/${this.user.id}/${this.user.avatar}.png?size=64`
@@ -159,12 +163,37 @@ class DiscordAuth {
 
     // Verificar si el usuario está autenticado
     isAuthenticated() {
-        return !!this.user;
+        return !!(this.user && this.token);
+    }
+
+    // Verificar y cargar usuario desde token existente
+    async loadUserFromToken() {
+        const savedToken = localStorage.getItem('discord_token');
+        const savedUser = localStorage.getItem('discord_user');
+        
+        if (savedToken) {
+            this.token = savedToken;
+            
+            if (savedUser) {
+                this.user = JSON.parse(savedUser);
+                this.updateUI();
+            } else {
+                // Si hay token pero no usuario, obtener el perfil
+                await this.fetchUserProfile();
+            }
+        }
     }
 }
 
 // Inicializar autenticación con Discord
 const discordAuth = new DiscordAuth();
+
+// Cargar usuario si existe token al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.discordAuth) {
+        window.discordAuth.loadUserFromToken();
+    }
+});
 
 // Exportar para uso global
 window.discordAuth = discordAuth;
