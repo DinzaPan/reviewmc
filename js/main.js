@@ -20,8 +20,6 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 this.style.transform = 'scale(1.1)';
             }, 200);
-            
-            console.log('Perfil de usuario clickeado');
         });
         
         // Restaurar animación hover original
@@ -137,12 +135,30 @@ function setupMenuEvents() {
         });
     }
     
+    // Discord - Ya manejado en discord.js
+    const menuDiscord = document.getElementById('menu-discord');
+    if (menuDiscord) {
+        menuDiscord.addEventListener('click', function(e) {
+            e.preventDefault();
+            // La funcionalidad está en discord.js
+        });
+    }
+    
     // Cómo Unirte - Mostrar modal de unirse
     const menuJoin = document.getElementById('menu-join');
     if (menuJoin) {
         menuJoin.addEventListener('click', function(e) {
             e.preventDefault();
             showJoinModal();
+        });
+    }
+    
+    // Logout - Ya manejado en discord.js
+    const menuLogout = document.getElementById('menu-logout');
+    if (menuLogout) {
+        menuLogout.addEventListener('click', function(e) {
+            e.preventDefault();
+            // La funcionalidad está en discord.js
         });
     }
     
@@ -255,6 +271,11 @@ style.textContent = `
         }
     }
     
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
     /* Estilos adicionales para mejoras visuales */
     .studio-card {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -272,6 +293,34 @@ style.textContent = `
         outline-offset: 2px;
     }
     
+    /* Loading overlay styles */
+    #loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    #loading-overlay .spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(6, 182, 212, 0.3);
+        border-top: 3px solid #06b6d4;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+    }
+    
     /* Mejoras de rendimiento para animaciones */
     @media (prefers-reduced-motion: reduce) {
         .studio-card,
@@ -281,6 +330,26 @@ style.textContent = `
             transition: none !important;
             animation: none !important;
         }
+        
+        #loading-overlay .spinner {
+            animation: none !important;
+        }
+    }
+    
+    /* Global notification styles */
+    .global-notification {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 3000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+        max-width: 300px;
+        word-wrap: break-word;
+        font-family: inherit;
     }
 `;
 document.head.appendChild(style);
@@ -309,7 +378,7 @@ document.addEventListener('click', function(e) {
     
     if (sidebar && sidebar.classList.contains('active') && 
         !sidebar.contains(e.target) && 
-        !profileButton.contains(e.target)) {
+        profileButton && !profileButton.contains(e.target)) {
         closeProfileSidebar();
     }
 });
@@ -344,12 +413,31 @@ const debouncedOpenSidebar = debounce(openProfileSidebar, 100);
 
 // Mejora: Manejar estado de carga mejorado
 function showGlobalLoading(message = 'Cargando...') {
-    // Implementar un sistema de loading global si es necesario
-    console.log('Loading:', message);
+    let loadingOverlay = document.getElementById('loading-overlay');
+    if (!loadingOverlay) {
+        loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'loading-overlay';
+        
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        
+        const text = document.createElement('div');
+        text.id = 'loading-text';
+        
+        loadingOverlay.appendChild(spinner);
+        loadingOverlay.appendChild(text);
+        document.body.appendChild(loadingOverlay);
+    }
+    
+    document.getElementById('loading-text').textContent = message;
+    loadingOverlay.style.display = 'flex';
 }
 
 function hideGlobalLoading() {
-    console.log('Loading complete');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
 }
 
 // Mejora: Sistema de notificaciones mejorado
@@ -406,6 +494,9 @@ window.closeProfileSidebar = closeProfileSidebar;
 window.showNotification = showNotification;
 window.showGlobalLoading = showGlobalLoading;
 window.hideGlobalLoading = hideGlobalLoading;
+window.showCreditsModal = showCreditsModal;
+window.showJoinModal = showJoinModal;
+window.closeModal = closeModal;
 
 // Inicialización adicional cuando todo esté cargado
 window.addEventListener('load', function() {
@@ -439,3 +530,33 @@ document.addEventListener('touchstart', function(e) {
         }
     }
 }, { passive: false });
+
+// Mejora: Manejar la visibilidad de la página para optimizar recursos
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // Página no visible, podrías pausar animaciones intensivas
+        console.log('Página en segundo plano');
+    } else {
+        // Página visible nuevamente
+        console.log('Página en primer plano');
+    }
+});
+
+// Mejora: Cargar recursos críticos primero
+function loadCriticalResources() {
+    // Preload de fuentes o recursos críticos si es necesario
+    const criticalResources = [
+        // Añade URLs de recursos críticos aquí si es necesario
+    ];
+    
+    criticalResources.forEach(resource => {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.href = resource;
+        link.as = 'image'; // o 'font', 'script', etc.
+        document.head.appendChild(link);
+    });
+}
+
+// Inicializar carga de recursos críticos
+loadCriticalResources();
