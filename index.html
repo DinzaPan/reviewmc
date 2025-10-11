@@ -21,8 +21,9 @@
                     <h1 class="site-title">ReviewMC</h1>
                 </div>
                 <div class="user-profile">
-                    <div class="profile-circle">
-                        <i class="fas fa-user"></i>
+                    <div class="profile-circle" id="profile-button">
+                        <i class="fas fa-user" id="profile-icon"></i>
+                        <img id="profile-image" class="profile-image" src="" alt="Foto de perfil" style="display: none;">
                     </div>
                 </div>
             </div>
@@ -39,8 +40,102 @@
                 <!-- Las tarjetas de negocios se cargarán aquí dinámicamente -->
             </div>
         </main>
+
+        <!-- Profile Sidebar -->
+        <div class="profile-sidebar" id="profile-sidebar">
+            <div class="sidebar-overlay" id="sidebar-overlay"></div>
+            <div class="sidebar-content">
+                <div class="sidebar-header">
+                    <button class="sidebar-close" id="sidebar-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <h3>Perfil de Usuario</h3>
+                </div>
+                
+                <div class="user-info">
+                    <div class="user-avatar-large">
+                        <img id="sidebar-profile-image" class="profile-image-large" src="" alt="Foto de perfil">
+                        <i class="fas fa-user" id="sidebar-profile-icon"></i>
+                    </div>
+                    <div class="user-details">
+                        <h4 id="username-display">Usuario</h4>
+                        <p id="user-discord-id"></p>
+                    </div>
+                </div>
+
+                <div class="sidebar-menu">
+                    <a href="#" class="menu-item" id="menu-home">
+                        <i class="fas fa-home"></i>
+                        <span>Inicio</span>
+                    </a>
+                    
+                    <a href="#" class="menu-item" id="menu-credits">
+                        <i class="fas fa-star"></i>
+                        <span>Créditos</span>
+                    </a>
+                    
+                    <a href="#" class="menu-item" id="menu-discord">
+                        <i class="fab fa-discord"></i>
+                        <span id="discord-text">Conectar con Discord</span>
+                    </a>
+                    
+                    <a href="#" class="menu-item" id="menu-join">
+                        <i class="fas fa-users"></i>
+                        <span>Cómo Unirte</span>
+                    </a>
+
+                    <div class="menu-divider"></div>
+
+                    <button class="menu-item logout-btn" id="menu-logout" style="display: none;">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Cerrar Sesión</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Credits Modal -->
+        <div class="modal" id="credits-modal">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Créditos</h3>
+                    <button class="modal-close" id="credits-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>ReviewMC - Plataforma de reseñas para estudios</p>
+                    <p>Desarrollado con ❤️ para la comunidad</p>
+                    <p>Versión 1.0.0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Join Modal -->
+        <div class="modal" id="join-modal">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Cómo Unirte</h3>
+                    <button class="modal-close" id="join-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Para unirte a nuestra comunidad:</p>
+                    <ol>
+                        <li>Conecta tu cuenta de Discord</li>
+                        <li>Únete a nuestro servidor</li>
+                        <li>Completa el proceso de verificación</li>
+                        <li>¡Listo! Ya puedes empezar a reseñar</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
     </div>
     
+    <script src="./js/discord.js"></script>
     <script src="./js/studios.js"></script>
     <script src="./js/main.js"></script>
 </body>
