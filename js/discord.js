@@ -1,11 +1,11 @@
-// Sistema de autenticación con Discord OAuth2 para Vercel (sin backend)
+// Sistema de autenticación con Discord OAuth2 - Versión Funcional
 class DiscordAuth {
     constructor() {
         this.config = {
-            clientId: '1397262934601896129', // Reemplaza con tu Client ID real
-            redirectUri: window.location.origin, // Usamos la misma página
+            clientId: '1397262934601896129', // Tu Client ID de Discord
+            redirectUri: window.location.origin, // Misma página para el callback
             scope: 'identify',
-            responseType: 'token' // Flujo implícito para frontend
+            responseType: 'token'
         };
         
         this.userData = null;
@@ -13,47 +13,66 @@ class DiscordAuth {
     }
 
     init() {
+        console.log('Inicializando Discord Auth...');
         this.loadUserData();
-        this.updateUI();
         this.setupEventListeners();
-        
-        // Verificar si hay token en la URL (callback del flujo implícito)
-        this.handleTokenCallback();
+        this.handleAuthCallback();
+        this.updateUI();
     }
 
-    // Manejar el callback del flujo implícito
-    handleTokenCallback() {
+    // Manejar el callback de autenticación
+    handleAuthCallback() {
+        console.log('Verificando callback de auth...');
         const hash = window.location.hash;
+        
         if (hash && hash.includes('access_token')) {
-            this.showLoading('Iniciando sesión...');
-            
+            console.log('Token detectado en URL:', hash.substring(0, 50) + '...');
+            this.processTokenFromHash(hash);
+        }
+    }
+
+    // Procesar token del hash de la URL
+    processTokenFromHash(hash) {
+        try {
             const params = new URLSearchParams(hash.substring(1));
             const accessToken = params.get('access_token');
             const tokenType = params.get('token_type');
             const expiresIn = params.get('expires_in');
-            
+
             if (accessToken) {
+                console.log('Token obtenido, obteniendo datos del usuario...');
+                this.showLoading('Iniciando sesión...');
                 this.getUserData(accessToken);
-                // Limpiar URL
+                
+                // Limpiar la URL - IMPORTANTE
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
+        } catch (error) {
+            console.error('Error procesando token:', error);
+            this.showMessage('Error en la autenticación', 'error');
         }
     }
 
     // Obtener datos del usuario desde Discord API
     async getUserData(accessToken) {
         try {
+            console.log('Haciendo request a Discord API...');
             const response = await fetch('https://discord.com/api/v10/users/@me', {
                 headers: {
-                    'Authorization': `Bearer ${accessToken}`
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
                 }
             });
             
+            console.log('Respuesta de Discord:', response.status);
+            
             if (!response.ok) {
-                throw new Error('Error al obtener datos del usuario');
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
             const userData = await response.json();
+            console.log('Datos del usuario:', userData);
+            
             userData.accessToken = accessToken;
             userData.connectedAt = new Date().toISOString();
             
@@ -65,27 +84,33 @@ class DiscordAuth {
             
         } catch (error) {
             console.error('Error obteniendo datos del usuario:', error);
-            this.showMessage('Error al cargar datos del perfil', 'error');
+            this.showMessage('Error al cargar datos del perfil: ' + error.message, 'error');
             this.hideLoading();
         }
     }
 
-    // Iniciar flujo OAuth2 implícito
+    // Iniciar flujo OAuth2
     connectDiscord() {
+        console.log('Iniciando flujo OAuth2...');
+        
         const state = this.generateState();
         localStorage.setItem('oauth_state', state);
         
-        const authUrl = new URL('https://discord.com/api/oauth2/authorize');
-        authUrl.searchParams.set('client_id', this.config.clientId);
-        authUrl.searchParams.set('redirect_uri', this.config.redirectUri);
-        authUrl.searchParams.set('response_type', this.config.responseType);
-        authUrl.searchParams.set('scope', this.config.scope);
-        authUrl.searchParams.set('state', state);
+        const authParams = new URLSearchParams({
+            client_id: this.config.clientId,
+            redirect_uri: this.config.redirectUri,
+            response_type: this.config.responseType,
+            scope: this.config.scope,
+            state: state
+        });
+
+        const authUrl = `https://discord.com/api/oauth2/authorize?${authParams.toString()}`;
+        console.log('Redirigiendo a:', authUrl);
         
-        window.location.href = authUrl.toString();
+        window.location.href = authUrl;
     }
 
-    // Generar estado para seguridad OAuth2
+    // Generar estado para seguridad
     generateState() {
         return Math.random().toString(36).substring(2, 15) + 
                Math.random().toString(36).substring(2, 15);
@@ -93,36 +118,40 @@ class DiscordAuth {
 
     // Cargar datos del usuario desde localStorage
     loadUserData() {
-        const saved = localStorage.getItem('discord_user_data');
-        if (saved) {
-            try {
-                const userData = JSON.parse(saved);
-                // Verificar si el token podría estar expirado (opcional)
-                // En producción podrías verificar la fecha de expiración
-                this.userData = userData;
-            } catch (e) {
-                console.error('Error parsing user data:', e);
-                localStorage.removeItem('discord_user_data');
+        try {
+            const saved = localStorage.getItem('discord_user_data');
+            if (saved) {
+                this.userData = JSON.parse(saved);
+                console.log('Usuario cargado desde localStorage:', this.userData.username);
             }
+        } catch (error) {
+            console.error('Error cargando datos del usuario:', error);
+            localStorage.removeItem('discord_user_data');
         }
     }
 
-    // Guardar datos del usuario en localStorage
+    // Guardar datos del usuario
     saveUserData() {
         if (this.userData) {
             localStorage.setItem('discord_user_data', JSON.stringify(this.userData));
+            console.log('Usuario guardado en localStorage');
         } else {
             localStorage.removeItem('discord_user_data');
+            console.log('Usuario eliminado de localStorage');
         }
     }
 
     // Configurar event listeners
     setupEventListeners() {
+        console.log('Configurando event listeners...');
+        
         // Botón de Discord en el menú
         const discordBtn = document.getElementById('menu-discord');
         if (discordBtn) {
             discordBtn.addEventListener('click', (e) => {
                 e.preventDefault();
+                console.log('Botón Discord clickeado, usuario autenticado:', !!this.userData);
+                
                 if (this.userData) {
                     // Si ya está conectado, abrir Discord
                     window.open('https://discord.com', '_blank');
@@ -131,6 +160,8 @@ class DiscordAuth {
                     this.connectDiscord();
                 }
             });
+        } else {
+            console.error('No se encontró el botón menu-discord');
         }
 
         // Botón de logout
@@ -138,13 +169,42 @@ class DiscordAuth {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
+                console.log('Cerrando sesión...');
                 this.logout();
             });
+        } else {
+            console.error('No se encontró el botón menu-logout');
         }
+
+        // Verificar que existan los elementos del DOM
+        this.checkDOMElements();
+    }
+
+    // Verificar elementos del DOM
+    checkDOMElements() {
+        const requiredElements = [
+            'menu-discord',
+            'menu-logout', 
+            'profile-image',
+            'profile-icon',
+            'sidebar-profile-image',
+            'sidebar-profile-icon',
+            'username-display',
+            'user-discord-id',
+            'discord-text'
+        ];
+
+        requiredElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (!element) {
+                console.warn(`Elemento no encontrado: #${id}`);
+            }
+        });
     }
 
     // Cerrar sesión
     logout() {
+        console.log('Ejecutando logout...');
         this.userData = null;
         this.saveUserData();
         this.updateUI();
@@ -154,117 +214,84 @@ class DiscordAuth {
 
     // Actualizar la interfaz de usuario
     updateUI() {
-        const profileImage = document.getElementById('profile-image');
-        const profileIcon = document.getElementById('profile-icon');
-        const sidebarProfileImage = document.getElementById('sidebar-profile-image');
-        const sidebarProfileIcon = document.getElementById('sidebar-profile-icon');
-        const usernameDisplay = document.getElementById('username-display');
-        const userDiscordId = document.getElementById('user-discord-id');
-        const discordText = document.getElementById('discord-text');
-        const logoutBtn = document.getElementById('menu-logout');
+        console.log('Actualizando UI...');
+        
+        const elements = {
+            profileImage: document.getElementById('profile-image'),
+            profileIcon: document.getElementById('profile-icon'),
+            sidebarProfileImage: document.getElementById('sidebar-profile-image'),
+            sidebarProfileIcon: document.getElementById('sidebar-profile-icon'),
+            usernameDisplay: document.getElementById('username-display'),
+            userDiscordId: document.getElementById('user-discord-id'),
+            discordText: document.getElementById('discord-text'),
+            logoutBtn: document.getElementById('menu-logout')
+        };
 
         if (this.userData) {
-            // Usuario conectado
+            console.log('Mostrando usuario autenticado:', this.userData.username);
+            
+            // Usuario conectado - generar avatar URL
             const avatarUrl = this.userData.avatar ? 
                 `https://cdn.discordapp.com/avatars/${this.userData.id}/${this.userData.avatar}.png?size=128` :
-                `https://cdn.discordapp.com/embed/avatars/${(this.userData.discriminator % 5) || 0}.png`;
-            
-            if (profileImage) {
-                profileImage.src = avatarUrl;
-                profileImage.style.display = 'block';
-                profileIcon.style.display = 'none';
+                `https://cdn.discordapp.com/embed/avatars/${(parseInt(this.userData.discriminator) % 5) || 0}.png`;
+
+            // Actualizar imágenes de perfil
+            if (elements.profileImage) {
+                elements.profileImage.src = avatarUrl;
+                elements.profileImage.style.display = 'block';
+            }
+            if (elements.profileIcon) {
+                elements.profileIcon.style.display = 'none';
+            }
+            if (elements.sidebarProfileImage) {
+                elements.sidebarProfileImage.src = avatarUrl;
+                elements.sidebarProfileImage.style.display = 'block';
+            }
+            if (elements.sidebarProfileIcon) {
+                elements.sidebarProfileIcon.style.display = 'none';
             }
 
-            if (sidebarProfileImage) {
-                sidebarProfileImage.src = avatarUrl;
-                sidebarProfileImage.style.display = 'block';
-                sidebarProfileIcon.style.display = 'none';
+            // Actualizar texto
+            if (elements.usernameDisplay) {
+                elements.usernameDisplay.textContent = this.userData.global_name || this.userData.username;
+            }
+            if (elements.userDiscordId) {
+                elements.userDiscordId.textContent = `@${this.userData.username}`;
+            }
+            if (elements.discordText) {
+                elements.discordText.textContent = 'Abrir Discord';
+            }
+            if (elements.logoutBtn) {
+                elements.logoutBtn.style.display = 'flex';
             }
 
-            if (usernameDisplay) {
-                usernameDisplay.textContent = this.userData.global_name || this.userData.username;
-            }
-
-            if (userDiscordId) {
-                userDiscordId.textContent = `@${this.userData.username}`;
-            }
-
-            if (discordText) {
-                discordText.textContent = 'Abrir Discord';
-            }
-
-            if (logoutBtn) {
-                logoutBtn.style.display = 'flex';
-            }
         } else {
+            console.log('Mostrando usuario no autenticado');
+            
             // Usuario no conectado
-            if (profileImage) {
-                profileImage.style.display = 'none';
-                profileIcon.style.display = 'block';
-            }
-
-            if (sidebarProfileImage) {
-                sidebarProfileImage.style.display = 'none';
-                sidebarProfileIcon.style.display = 'block';
-            }
-
-            if (usernameDisplay) {
-                usernameDisplay.textContent = 'Usuario';
-            }
-
-            if (userDiscordId) {
-                userDiscordId.textContent = '';
-            }
-
-            if (discordText) {
-                discordText.textContent = 'Conectar con Discord';
-            }
-
-            if (logoutBtn) {
-                logoutBtn.style.display = 'none';
-            }
+            if (elements.profileImage) elements.profileImage.style.display = 'none';
+            if (elements.profileIcon) elements.profileIcon.style.display = 'block';
+            if (elements.sidebarProfileImage) elements.sidebarProfileImage.style.display = 'none';
+            if (elements.sidebarProfileIcon) elements.sidebarProfileIcon.style.display = 'block';
+            if (elements.usernameDisplay) elements.usernameDisplay.textContent = 'Usuario';
+            if (elements.userDiscordId) elements.userDiscordId.textContent = '';
+            if (elements.discordText) elements.discordText.textContent = 'Conectar con Discord';
+            if (elements.logoutBtn) elements.logoutBtn.style.display = 'none';
         }
     }
 
-    // Mostrar carga
+    // Mostrar loading
     showLoading(message) {
+        console.log('Mostrando loading:', message);
         let loadingOverlay = document.getElementById('loading-overlay');
+        
         if (!loadingOverlay) {
             loadingOverlay = document.createElement('div');
             loadingOverlay.id = 'loading-overlay';
-            loadingOverlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.8);
-                backdrop-filter: blur(10px);
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                z-index: 9999;
-                color: white;
-                font-size: 1.2rem;
+            loadingOverlay.innerHTML = `
+                <div class="spinner"></div>
+                <div id="loading-text">${message}</div>
             `;
-            
-            const spinner = document.createElement('div');
-            spinner.style.cssText = `
-                width: 50px;
-                height: 50px;
-                border: 3px solid rgba(6, 182, 212, 0.3);
-                border-top: 3px solid #06b6d4;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin-bottom: 20px;
-            `;
-            
-            const text = document.createElement('div');
-            text.id = 'loading-text';
-            
-            loadingOverlay.appendChild(spinner);
-            loadingOverlay.appendChild(text);
             document.body.appendChild(loadingOverlay);
         }
         
@@ -272,8 +299,9 @@ class DiscordAuth {
         loadingOverlay.style.display = 'flex';
     }
 
-    // Ocultar carga
+    // Ocultar loading
     hideLoading() {
+        console.log('Ocultando loading');
         const loadingOverlay = document.getElementById('loading-overlay');
         if (loadingOverlay) {
             loadingOverlay.style.display = 'none';
@@ -282,14 +310,22 @@ class DiscordAuth {
 
     // Mostrar mensaje
     showMessage(message, type = 'info') {
+        console.log(`Mostrando mensaje [${type}]:`, message);
+        
+        // Remover notificaciones existentes
+        document.querySelectorAll('.global-notification').forEach(notification => {
+            notification.remove();
+        });
+
         const colors = {
             success: '#10b981',
             error: '#ef4444',
             info: '#3b82f6',
             warning: '#f59e0b'
         };
-        
+
         const notification = document.createElement('div');
+        notification.className = 'global-notification';
         notification.style.cssText = `
             position: fixed;
             top: 100px;
@@ -304,15 +340,17 @@ class DiscordAuth {
             transition: transform 0.3s ease;
             max-width: 300px;
             word-wrap: break-word;
+            font-family: inherit;
         `;
         notification.textContent = message;
-        
         document.body.appendChild(notification);
-        
+
+        // Animación de entrada
         setTimeout(() => {
             notification.style.transform = 'translateX(0)';
         }, 100);
-        
+
+        // Auto-remover después de 4 segundos
         setTimeout(() => {
             notification.style.transform = 'translateX(400px)';
             setTimeout(() => {
@@ -336,18 +374,19 @@ class DiscordAuth {
         return this.userData;
     }
 
-    // Verificar si el usuario está autenticado
+    // Verificar si está autenticado
     isAuthenticated() {
         return this.userData !== null;
     }
 }
 
-// Inicializar sistema de Discord cuando el DOM esté listo
+// Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, inicializando Discord Auth...');
     window.discordAuth = new DiscordAuth();
 });
 
-// Funciones globales para manejar el sidebar
+// Funciones globales
 function openProfileSidebar() {
     const sidebar = document.getElementById('profile-sidebar');
     if (sidebar) {
@@ -362,24 +401,9 @@ function closeProfileSidebar() {
     }
 }
 
-// Cerrar sidebar al hacer clic fuera
-document.addEventListener('click', function(e) {
-    const sidebar = document.getElementById('profile-sidebar');
-    const profileButton = document.getElementById('profile-button');
-    
-    if (sidebar && sidebar.classList.contains('active') && 
-        !sidebar.contains(e.target) && 
-        profileButton && !profileButton.contains(e.target)) {
-        closeProfileSidebar();
-    }
-});
+// Debug: Exponer funciones globalmente
+window.DiscordAuth = DiscordAuth;
+window.openProfileSidebar = openProfileSidebar;
+window.closeProfileSidebar = closeProfileSidebar;
 
-// Cerrar con Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeProfileSidebar();
-        document.querySelectorAll('.modal.active').forEach(modal => {
-            modal.classList.remove('active');
-        });
-    }
-});
+console.log('Discord Auth cargado correctamente');
