@@ -37,7 +37,7 @@ function createSocialLinks(socialLinks) {
 }
 
 // Función para cargar los detalles del studio
-function loadStudioDetail() {
+async function loadStudioDetail() {
     const container = document.getElementById('studio-detail-container');
     const params = getUrlParams();
     
@@ -133,17 +133,17 @@ function loadStudioDetail() {
                 `}
                 
                 <div class="reviews-grid" id="reviews-container">
-                    ${studioRating.reviewCount === 0 ? 
-                        '<div class="no-reviews"><i class="fas fa-comment-slash" style="font-size: 3rem; margin-bottom: 1rem;"></i><p>No hay reseñas aún. Sé el primero en opinar.</p></div>' : 
-                        ''
-                    }
+                    <div class="loading-detail">
+                        <div class="loading-spinner"></div>
+                        <p>Cargando reseñas...</p>
+                    </div>
                 </div>
             </div>
         </div>
     `;
     
-    // Cargar reseñas existentes
-    loadReviews(studio.id);
+    // Cargar reseñas existentes desde JSONBin.io
+    await loadReviews(studio.id);
     
     // Configurar eventos para el formulario de reseña si el usuario no ha reseñado
     if (!userReview) {
@@ -151,14 +151,39 @@ function loadStudioDetail() {
     }
 }
 
-// Función para cargar las reseñas
-function loadReviews(studioId) {
+// Función para cargar las reseñas desde JSONBin.io
+async function loadReviews(studioId) {
     const reviewsContainer = document.getElementById('reviews-container');
     if (!reviewsContainer) return;
     
-    const reviews = window.getStudioReviews ? window.getStudioReviews(studioId) : [];
+    let reviews = [];
     
-    if (reviews.length === 0) return;
+    try {
+        // Intentar cargar desde JSONBin.io primero
+        if (window.loadReviewsFromJsonBin) {
+            reviews = await window.loadReviewsFromJsonBin(studioId);
+        }
+        
+        // Si no hay reseñas en JSONBin.io, cargar localmente
+        if (reviews.length === 0 && window.getStudioReviews) {
+            reviews = window.getStudioReviews(studioId);
+        }
+    } catch (error) {
+        console.error('Error cargando reseñas:', error);
+        if (window.getStudioReviews) {
+            reviews = window.getStudioReviews(studioId);
+        }
+    }
+    
+    if (reviews.length === 0) {
+        reviewsContainer.innerHTML = `
+            <div class="no-reviews">
+                <i class="fas fa-comment-slash" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <p>No hay reseñas aún. Sé el primero en opinar.</p>
+            </div>
+        `;
+        return;
+    }
     
     let reviewsHTML = '';
     
@@ -270,10 +295,13 @@ function setupReviewForm(studioId) {
             if (window.addReview) {
                 window.addReview(studioId, selectedRating, commentInput.value.trim());
                 
+                // Mostrar mensaje de éxito
+                alert('¡Reseña publicada con éxito!');
+                
                 // Recargar la página para mostrar la nueva reseña
                 setTimeout(() => {
-                    loadStudioDetail();
-                }, 500);
+                    window.location.reload();
+                }, 1000);
             } else {
                 alert('Error: No se pudo agregar la reseña. Función no disponible.');
             }
@@ -285,8 +313,42 @@ function setupReviewForm(studioId) {
     }
 }
 
+// Función para mostrar perfil de usuario en la navbar
+function updateNavbarProfile() {
+    const userProfile = window.getUserProfile ? window.getUserProfile() : null;
+    const profileCircle = document.querySelector('.profile-circle');
+    
+    if (userProfile && profileCircle) {
+        // Si el usuario tiene avatar, actualizar la imagen
+        if (userProfile.avatar && !userProfile.isDefault) {
+            profileCircle.innerHTML = '';
+            const avatarImg = document.createElement('img');
+            avatarImg.src = userProfile.avatar;
+            avatarImg.alt = userProfile.username;
+            avatarImg.style.width = '100%';
+            avatarImg.style.height = '100%';
+            avatarImg.style.borderRadius = '50%';
+            avatarImg.style.objectFit = 'cover';
+            avatarImg.onerror = function() {
+                // Si falla la imagen, usar ícono por defecto
+                profileCircle.innerHTML = '<i class="fas fa-user"></i>';
+            };
+            profileCircle.appendChild(avatarImg);
+        }
+        
+        // Actualizar tooltip o información del perfil si existe
+        const profileElement = document.querySelector('.user-profile');
+        if (profileElement) {
+            profileElement.setAttribute('title', `${userProfile.username}\n${userProfile.discord}`);
+        }
+    }
+}
+
 // Cargar los detalles cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
+    // Actualizar perfil en la navbar
+    updateNavbarProfile();
+    
     // Esperar a que studiosData esté disponible
     if (window.studiosData) {
         loadStudioDetail();
@@ -315,3 +377,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 2000);
     }
 });
+
+// Manejar errores globales
+window.addEventListener('error', function(e) {
+    console.error('Error global:', e.error);
+});
+
+// Exportar funciones para uso global si es necesario
+window.loadStudioDetail = loadStudioDetail;
+window.loadReviews = loadReviews;
