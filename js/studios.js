@@ -61,6 +61,48 @@ const JSONBIN_CONFIG = {
 const STORAGE_KEY = "reviewmc_ratings";
 const USER_REVIEWS_KEY = "reviewmc_user_reviews";
 const STUDIO_REVIEWS_KEY = "reviewmc_reviews";
+const USER_PROFILE_KEY = "reviewmc_user_profile";
+
+// Función para obtener perfil del usuario
+function getUserProfile() {
+    const stored = localStorage.getItem(USER_PROFILE_KEY);
+    if (stored) {
+        return JSON.parse(stored);
+    }
+    
+    // Perfil por defecto si no existe
+    const defaultProfile = {
+        id: 'user_' + Date.now(),
+        username: 'Usuario',
+        discord: 'usuario#0000',
+        avatar: './img/avatar-default.png',
+        isDefault: true
+    };
+    
+    saveUserProfile(defaultProfile);
+    return defaultProfile;
+}
+
+// Función para guardar perfil del usuario
+function saveUserProfile(profile) {
+    localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
+}
+
+// Función para actualizar perfil desde Discord
+async function updateProfileFromDiscord(discordData) {
+    const profile = {
+        id: discordData.id || 'user_' + Date.now(),
+        username: discordData.username || 'Usuario',
+        discord: discordData.discord || `${discordData.username}#${discordData.discriminator}`,
+        avatar: discordData.avatar ? 
+            `https://cdn.discordapp.com/avatars/${discordData.id}/${discordData.avatar}.png` : 
+            './img/avatar-default.png',
+        isDefault: false
+    };
+    
+    saveUserProfile(profile);
+    return profile;
+}
 
 // Función para obtener reseñas del almacenamiento local
 function getLocalRatings() {
@@ -186,7 +228,7 @@ async function updateJsonBin(ratings) {
 
 // Función para agregar una reseña
 async function addReview(studioId, rating, comment) {
-    const userProfile = getCurrentUserProfile();
+    const userProfile = getUserProfile();
     const userReviews = getUserReviews();
     const studioReviews = getStudioReviews(studioId);
     
@@ -290,18 +332,6 @@ function deleteReview(studioId, reviewId) {
     
     // Recargar la página para reflejar los cambios
     window.location.reload();
-}
-
-// Función para obtener el perfil del usuario actual
-function getCurrentUserProfile() {
-    // En una implementación real, esto vendría de la autenticación
-    // Por ahora, usamos datos fijos para demostración
-    return {
-        id: 'user123',
-        username: 'UsuarioEjemplo',
-        discord: 'usuario#1234',
-        avatar: './img/avatar-default.png'
-    };
 }
 
 // Función mejorada para crear estrellas
@@ -491,5 +521,6 @@ window.syncWithJsonBin = syncWithJsonBin;
 window.getLocalRatings = getLocalRatings;
 window.getUserReviews = getUserReviews;
 window.getStudioReviews = getStudioReviews;
-window.getCurrentUserProfile = getCurrentUserProfile;
+window.getUserProfile = getUserProfile;
+window.updateProfileFromDiscord = updateProfileFromDiscord;
 window.createStars = createStars;
