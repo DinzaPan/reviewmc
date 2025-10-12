@@ -47,6 +47,22 @@ const studiosData = [
             youtube: false,
             twitter: false
         }
+    },
+    {
+        id: 4,
+        name: "Galaxy Studio",
+        image: "./img/studios/studio4.jpg",
+        category: "Creadores de eventos, addons, y mapas.",
+        description: "🌌 Somos desarrolladores de proyectos en Minecraft Bedrock🛠️ 📱 Creamos experiencias únicas, eventos épicos y contenido original 🎮✨.",
+        customBackground: "./img/port/fon4.jpg",
+        hasCustomBg: true,
+        socialLinks: {
+            discord: "https://discord.gg/Ur3GKgpy?event=1424897733713592330",
+            whatsapp: false,
+            tiktok: false,
+            youtube: false,
+            twitter: false
+        }
     }
 ];
 
