@@ -18,18 +18,18 @@ const studiosData = [
     },
     {
         id: 2,
-        name: "Digital Creations",
-        image: "./img/studios/prueba.jpg",
-        category: "Marketing Digital",
-        description: "Agencia de marketing digital especializada en estrategias de crecimiento y posicionamiento online para marcas.",
-        customBackground: "./img/port/default.jpeg",
+        name: "SquereCraft Studio",
+        image: "./img/studios/studio2.jpg",
+        category: "Create Events",
+        description: "Hola, somos SquareCraft Studio, una comunidad de Minecraft muy chula, en la cual te garantizamos una diversión sin fin, ¿Te gustaría participar en servidores y eventos increíbles? Pues este es tu sitio, contamos con un staff impresionante, cuidamos de cada detalle puesto en el desarrollo del servidor o evento¿Quieres que tús eventos o servidores sean lo mejor de lo mejor? Pues tambien puedes contratar nuestros servicios, con precios muy competitivos y una calidad impresionante, un trato increíble y unos servicios extra únicos y exclusivos solo para ti y tú comunidad",
+        customBackground: "./img/port/fon2.jpg",
         hasCustomBg: false,
         socialLinks: {
-            discord: false,
-            whatsapp: "https://wa.me/987654321",
+            discord: "https://discord.gg/MPeG9AP4",
+            whatsapp: false,
             tiktok: false,
-            youtube: "https://youtube.com/c/digitalcreations",
-            twitter: "https://twitter.com/digitalcreations"
+            youtube: "https://youtube.com/@squarecraftstudios?si=IQMgxxqGN4-JSGGb",
+            twitter: false
         }
     },
     {
