@@ -87,7 +87,7 @@ function loadStudioDetail() {
     
     // Crear el HTML de los detalles
     container.innerHTML = `
-        <div class="studio-detail-content">
+        <div class="studio-detail-wrapper">
             <div class="studio-header-detail">
                 <img src="${studio.image}" alt="${studio.name}" class="studio-image-large"
                      onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiByeD0iMjAiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xMjBfMTIwKSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzEyMF8xMjAiIHgxPSIwIiB5MT0iMCIgeDI9IjEyMCIgeTI9IjEyMCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMDZCNkQ0Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0Y1OUUwQiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo='">
@@ -163,13 +163,15 @@ function loadReviews(studioId) {
     let reviewsHTML = '';
     
     reviews.forEach(review => {
-        const isCurrentUser = review.userId === (window.getCurrentUserProfile ? window.getCurrentUserProfile().id : '');
+        const userProfile = window.getUserProfile ? window.getUserProfile() : {};
+        const isCurrentUser = review.userId === userProfile.id;
         
         reviewsHTML += `
             <div class="review-card" data-review-id="${review.id}">
                 <div class="review-header">
                     <div class="review-author">
-                        <img src="${review.avatar}" alt="${review.username}" class="author-avatar">
+                        <img src="${review.avatar}" alt="${review.username}" class="author-avatar" 
+                             onerror="this.src='./img/avatar-default.png'">
                         <div class="author-info">
                             <span class="author-name">${review.username}</span>
                             <span class="author-discord">${review.discord}</span>
