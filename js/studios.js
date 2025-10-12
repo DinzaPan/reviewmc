@@ -93,14 +93,18 @@ async function updateProfileFromDiscord(discordData) {
     const profile = {
         id: discordData.id || 'user_' + Date.now(),
         username: discordData.username || 'Usuario',
-        discord: discordData.discord || `${discordData.username}#${discordData.discriminator}`,
+        discord: discordData.discord || `${discordData.username}#${discordData.discriminator || '0000'}`,
         avatar: discordData.avatar ? 
             `https://cdn.discordapp.com/avatars/${discordData.id}/${discordData.avatar}.png` : 
-            './img/avatar-default.png',
+            `https://cdn.discordapp.com/embed/avatars/${(discordData.discriminator || '0000') % 5}.png`,
         isDefault: false
     };
     
     saveUserProfile(profile);
+    
+    // Actualizar UI inmediatamente
+    updateNavbarProfile();
+    
     return profile;
 }
 
@@ -575,8 +579,54 @@ async function loadStudios() {
     }
 }
 
+// Función para actualizar el perfil en la navbar
+function updateNavbarProfile() {
+    const userProfile = getUserProfile();
+    const profileCircle = document.querySelector('.profile-circle');
+    
+    if (userProfile && profileCircle) {
+        // Limpiar el contenido existente
+        profileCircle.innerHTML = '';
+        
+        // Si el usuario tiene avatar y no es el por defecto, usar la imagen
+        if (userProfile.avatar && !userProfile.isDefault) {
+            const avatarImg = document.createElement('img');
+            avatarImg.src = userProfile.avatar;
+            avatarImg.alt = userProfile.username;
+            avatarImg.style.width = '100%';
+            avatarImg.style.height = '100%';
+            avatarImg.style.borderRadius = '50%';
+            avatarImg.style.objectFit = 'cover';
+            avatarImg.onerror = function() {
+                // Si falla la imagen, usar ícono por defecto
+                profileCircle.innerHTML = '<i class="fas fa-user"></i>';
+            };
+            profileCircle.appendChild(avatarImg);
+        } else {
+            // Usar ícono por defecto
+            profileCircle.innerHTML = '<i class="fas fa-user"></i>';
+        }
+        
+        // Actualizar tooltip o información del perfil si existe
+        const profileElement = document.querySelector('.user-profile');
+        if (profileElement) {
+            profileElement.setAttribute('title', `${userProfile.username}\n${userProfile.discord}`);
+        }
+    }
+}
+
 // Cargar estudios cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', loadStudios);
+document.addEventListener('DOMContentLoaded', function() {
+    // Actualizar perfil en la navbar
+    updateNavbarProfile();
+    
+    // Escuchar cambios en la autenticación
+    document.addEventListener('authStateChanged', function() {
+        updateNavbarProfile();
+    });
+    
+    loadStudios();
+});
 
 // Exportar para uso global
 window.studiosData = studiosData;
@@ -591,3 +641,4 @@ window.getUserProfile = getUserProfile;
 window.updateProfileFromDiscord = updateProfileFromDiscord;
 window.createStars = createStars;
 window.loadReviewsFromJsonBin = loadReviewsFromJsonBin;
+window.updateNavbarProfile = updateNavbarProfile;
