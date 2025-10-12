@@ -34,18 +34,18 @@ const studiosData = [
     },
     {
         id: 3,
-        name: "Tech Solutions",
-        image: "./img/studios/prueba.jpg",
-        category: "Consultoría IT",
-        description: "Consultoría tecnológica especializada en transformación digital y soluciones empresariales innovadoras.",
-        customBackground: "./img/port/default.jpeg",
-        hasCustomBg: false,
+        name: "Hexa Studios",
+        image: "./img/studios/studio3.jpg",
+        category: "Event Creators and Addons",
+        description: "Un studio dedicado a Minecraft que tiene varios modos de juego.",
+        customBackground: "./img/port/fon3.jpg",
+        hasCustomBg: true,
         socialLinks: {
-            discord: "https://discord.gg/techsolutions",
+            discord: "https://discord.gg/Ur3GKgpy?event=1424897733713592330",
             whatsapp: false,
             tiktok: false,
             youtube: false,
-            twitter: "https://twitter.com/techsolutions"
+            twitter: false
         }
     }
 ];
