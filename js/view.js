@@ -8,6 +8,21 @@ function getUrlParams() {
     };
 }
 
+// Función para actualizar la URL con el nombre del studio
+function updatePageUrl(studioName, studioId) {
+    const cleanName = studioName
+        .toLowerCase()
+        .replace(/[^a-z0-9áéíóúñü ]/g, '')
+        .replace(/\s+/g, '-')
+        .substring(0, 50);
+    
+    const newUrl = `view.html?id=${studioId}&name=${cleanName}`;
+    window.history.replaceState({}, '', newUrl);
+    
+    // Actualizar el título de la página
+    document.title = `${studioName} - ReviewMC`;
+}
+
 // Función para crear botones de redes sociales
 function createSocialLinks(socialLinks) {
     if (!socialLinks) return '';
@@ -84,6 +99,9 @@ async function loadStudioDetail() {
     // Obtener reseñas del usuario actual
     const userReviews = window.getUserReviews ? window.getUserReviews() : {};
     const userReview = userReviews[studio.id];
+    
+    // Actualizar la URL con el nombre del studio
+    updatePageUrl(studio.name, studio.id);
     
     // Crear el HTML de los detalles SIN TARJETAS GRANDES
     container.innerHTML = `
@@ -425,3 +443,4 @@ window.loadStudioDetail = loadStudioDetail;
 window.loadReviews = loadReviews;
 window.deleteUserReview = deleteUserReview;
 window.updateNavbarProfile = updateNavbarProfile;
+window.updatePageUrl = updatePageUrl;
