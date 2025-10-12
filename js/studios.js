@@ -9,11 +9,11 @@ const studiosData = [
         customBackground: "./img/port/prueba.jpeg",
         hasCustomBg: true,
         socialLinks: {
-            discord: "https://discord.gg/megepixel",
-            whatsapp: "https://wa.me/123456789",
-            tiktok: "https://tiktok.com/@megepixel",
-            youtube: "https://youtube.com/c/megepixel",
-            twitter: "https://twitter.com/megepixel"
+            discord: "https://discord.gg/RMfzSyNxjT",
+            whatsapp: "https://whatsapp.com/channel/0029VbBXekx1t90czIbLim25",
+            tiktok: false,
+            youtube: false,
+            twitter: false
         }
     },
     {
