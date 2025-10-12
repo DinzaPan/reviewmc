@@ -35,7 +35,7 @@ class ProfileMenu {
                         <i class="fas fa-heart"></i>
                         <span>Créditos</span>
                     </a>
-                    <a href="https://discord.gg/tu-invite" target="_blank" class="menu-item" data-action="discord">
+                    <a href="https://discord.gg/RMfzSyNxjT" target="_blank" class="menu-item" data-action="discord">
                         <i class="fab fa-discord"></i>
                         <span>Discord</span>
                     </a>
