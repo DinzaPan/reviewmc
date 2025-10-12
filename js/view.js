@@ -85,13 +85,14 @@ async function loadStudioDetail() {
     const userReviews = window.getUserReviews ? window.getUserReviews() : {};
     const userReview = userReviews[studio.id];
     
-    // Crear el HTML de los detalles
+    // Crear el HTML de los detalles con el nuevo diseño de fondo
     container.innerHTML = `
-        <div class="studio-detail-wrapper">
-            <div class="studio-header-detail">
+        <div class="studio-hero" id="studio-hero">
+            <div class="studio-overlay"></div>
+            <div class="studio-hero-content">
                 <img src="${studio.image}" alt="${studio.name}" class="studio-image-large"
-                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiByeD0iMjAiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xMjBfMTIwKSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzEyMF8xMjAiIHgxPSIwIiB5MT0iMCIgeDI9IjEyMCIgeTI9IjEyMCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMDZCNkQ0Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0Y1OUUwQiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo='">
-                <div class="studio-info-detail">
+                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQwIiBoZWlnaHQ9IjE0MCIgdmlld0JveD0iMCAwIDE0MCAxNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNDAiIGhlaWdodD0iMTQwIiByeD0iMjAiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xNDBfMTQwKSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzE0MF8xNDAiIHgxPSIwIiB5MT0iMCIgeDI9IjE0MCIgeTI9IjE0MCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMDZCNkQ0Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0Y1OUUwQiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo='">
+                <div class="studio-info-hero">
                     <h1 class="studio-name-large">${studio.name}</h1>
                     <div class="studio-category-large">${studio.category}</div>
                     <div class="rating-section">
@@ -101,46 +102,64 @@ async function loadStudioDetail() {
                     </div>
                 </div>
             </div>
-            
+        </div>
+        
+        <div class="studio-description-section">
+            <h2 class="section-title">Descripción</h2>
             <div class="studio-description">
                 ${studio.description || 'No hay descripción disponible.'}
             </div>
             
+            <h2 class="section-title">Redes Sociales</h2>
             ${createSocialLinks(studio.socialLinks)}
+        </div>
+        
+        <div class="reviews-section">
+            <h2 class="section-title">Reseñas de la Comunidad</h2>
             
-            <div class="reviews-section">
-                <h2 class="section-title">Reseñas de la Comunidad</h2>
-                
-                ${!userReview ? `
-                <div class="add-review-section">
-                    <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Añadir tu reseña</h3>
-                    <div class="review-form">
-                        <div class="rating-input" id="rating-input">
-                            <i class="far fa-star rating-star" data-rating="1"></i>
-                            <i class="far fa-star rating-star" data-rating="2"></i>
-                            <i class="far fa-star rating-star" data-rating="3"></i>
-                            <i class="far fa-star rating-star" data-rating="4"></i>
-                            <i class="far fa-star rating-star" data-rating="5"></i>
-                        </div>
-                        <textarea class="comment-input" id="comment-input" placeholder="Escribe tu reseña aquí..."></textarea>
-                        <button class="submit-review-btn" id="submit-review-btn" disabled>Publicar reseña</button>
+            ${!userReview ? `
+            <div class="add-review-section">
+                <h3 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.4rem;">Añadir tu reseña</h3>
+                <div class="review-form">
+                    <div class="rating-input" id="rating-input">
+                        <i class="far fa-star rating-star" data-rating="1"></i>
+                        <i class="far fa-star rating-star" data-rating="2"></i>
+                        <i class="far fa-star rating-star" data-rating="3"></i>
+                        <i class="far fa-star rating-star" data-rating="4"></i>
+                        <i class="far fa-star rating-star" data-rating="5"></i>
                     </div>
+                    <textarea class="comment-input" id="comment-input" placeholder="Escribe tu reseña aquí..."></textarea>
+                    <button class="submit-review-btn" id="submit-review-btn" disabled>Publicar reseña</button>
                 </div>
-                ` : `
-                <div class="user-review-notice">
-                    <i class="fas fa-info-circle"></i> Ya has publicado una reseña para este estudio.
-                </div>
-                `}
-                
-                <div class="reviews-grid" id="reviews-container">
-                    <div class="loading-detail">
-                        <div class="loading-spinner"></div>
-                        <p>Cargando reseñas...</p>
-                    </div>
+            </div>
+            ` : `
+            <div class="user-review-notice">
+                <i class="fas fa-info-circle"></i> Ya has publicado una reseña para este estudio.
+            </div>
+            `}
+            
+            <div class="reviews-grid" id="reviews-container">
+                <div class="loading-detail">
+                    <div class="loading-spinner"></div>
+                    <p>Cargando reseñas...</p>
                 </div>
             </div>
         </div>
     `;
+
+    // Configurar el fondo personalizado si existe
+    if (studio.hasCustomBg && studio.customBackground) {
+        const studioHero = document.getElementById('studio-hero');
+        const backgroundImg = document.createElement('img');
+        backgroundImg.src = studio.customBackground;
+        backgroundImg.alt = `${studio.name} Background`;
+        backgroundImg.className = 'studio-background';
+        backgroundImg.onerror = function() {
+            // Si falla la imagen de fondo, usar gradiente por defecto
+            studioHero.style.background = 'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(245, 158, 11, 0.2))';
+        };
+        studioHero.appendChild(backgroundImg);
+    }
     
     // Cargar reseñas existentes desde JSONBin.io
     await loadReviews(studio.id);
