@@ -8,37 +8,32 @@ function getUrlParams() {
     };
 }
 
-// Función para crear estrellas
-function createStars(rating) {
-    const starsContainer = document.createElement('div');
-    starsContainer.className = 'stars';
+// Función para crear botones de redes sociales
+function createSocialLinks(socialLinks) {
+    if (!socialLinks) return '';
     
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.3 && rating % 1 <= 0.7;
-    const hasAlmostFull = rating % 1 > 0.7;
+    const socialIcons = {
+        discord: 'fab fa-discord',
+        whatsapp: 'fab fa-whatsapp',
+        tiktok: 'fab fa-tiktok',
+        youtube: 'fab fa-youtube',
+        twitter: 'fab fa-twitter'
+    };
     
-    for (let i = 0; i < fullStars + (hasAlmostFull ? 1 : 0); i++) {
-        const star = document.createElement('i');
-        star.className = 'fas fa-star filled';
-        starsContainer.appendChild(star);
+    let html = '<div class="social-links">';
+    
+    for (const [platform, url] of Object.entries(socialLinks)) {
+        if (url && socialIcons[platform]) {
+            html += `
+                <a href="${url}" target="_blank" class="social-link ${platform}">
+                    <i class="${socialIcons[platform]}"></i>
+                </a>
+            `;
+        }
     }
     
-    if (hasHalfStar && fullStars + (hasAlmostFull ? 1 : 0) < 5) {
-        const halfStar = document.createElement('i');
-        halfStar.className = 'fas fa-star-half-alt half';
-        starsContainer.appendChild(halfStar);
-    }
-    
-    const totalStars = fullStars + (hasHalfStar ? 1 : 0) + (hasAlmostFull ? 1 : 0);
-    const emptyStars = 5 - totalStars;
-    
-    for (let i = 0; i < emptyStars; i++) {
-        const star = document.createElement('i');
-        star.className = 'far fa-star star';
-        starsContainer.appendChild(star);
-    }
-    
-    return starsContainer;
+    html += '</div>';
+    return html;
 }
 
 // Función para cargar los detalles del studio
@@ -68,7 +63,7 @@ function loadStudioDetail() {
     
     // Buscar el studio en los datos globales
     const studio = window.studiosData ? window.studiosData.find(s => s.id === params.id) : null;
-    const ratings = getLocalRatings();
+    const ratings = window.getLocalRatings ? window.getLocalRatings() : {};
     const studioRating = ratings[studio?.id] || { averageRating: 0, reviewCount: 0 };
     
     if (!studio) {
@@ -86,9 +81,13 @@ function loadStudioDetail() {
         return;
     }
     
+    // Obtener reseñas del usuario actual
+    const userReviews = window.getUserReviews ? window.getUserReviews() : {};
+    const userReview = userReviews[studio.id];
+    
     // Crear el HTML de los detalles
     container.innerHTML = `
-        <div class="studio-detail-card">
+        <div class="studio-detail-content">
             <div class="studio-header-detail">
                 <img src="${studio.image}" alt="${studio.name}" class="studio-image-large"
                      onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiByeD0iMjAiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xMjBfMTIwKSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzEyMF8xMjAiIHgxPSIwIiB5MT0iMCIgeDI9IjEyMCIgeTI9IjEyMCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMDZCNkQ0Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0Y1OUUwQiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo='">
@@ -96,9 +95,9 @@ function loadStudioDetail() {
                     <h1 class="studio-name-large">${studio.name}</h1>
                     <div class="studio-category-large">${studio.category}</div>
                     <div class="rating-section">
+                        <i class="fas fa-star rating-icon"></i>
                         <span class="rating-value-large">${studioRating.averageRating.toFixed(1)}</span>
-                        <div class="stars-large"></div>
-                        <span class="review-count-large">${studioRating.reviewCount} reseñas</span>
+                        <span class="review-count-large">(${studioRating.reviewCount})</span>
                     </div>
                 </div>
             </div>
@@ -107,75 +106,181 @@ function loadStudioDetail() {
                 ${studio.description || 'No hay descripción disponible.'}
             </div>
             
-            <div class="details-grid">
-                <div class="detail-item">
-                    <div class="detail-label">Fundado</div>
-                    <div class="detail-value">${studio.details?.founded || 'No especificado'}</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Ubicación</div>
-                    <div class="detail-value">${studio.details?.location || 'No especificada'}</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Especialidades</div>
-                    <div class="detail-value">${studio.details?.specialties?.join(', ') || 'No especificadas'}</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Sitio Web</div>
-                    <div class="detail-value">
-                        ${studio.details?.website ? 
-                            `<a href="${studio.details.website}" target="_blank" style="color: var(--primary-light); text-decoration: none;">
-                                Visitar sitio web
-                            </a>` : 
-                            'No disponible'
-                        }
-                    </div>
-                </div>
-            </div>
+            ${createSocialLinks(studio.socialLinks)}
             
             <div class="reviews-section">
                 <h2 class="section-title">Reseñas de la Comunidad</h2>
+                
+                ${!userReview ? `
+                <div class="add-review-section">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Añadir tu reseña</h3>
+                    <div class="review-form">
+                        <div class="rating-input" id="rating-input">
+                            <i class="far fa-star rating-star" data-rating="1"></i>
+                            <i class="far fa-star rating-star" data-rating="2"></i>
+                            <i class="far fa-star rating-star" data-rating="3"></i>
+                            <i class="far fa-star rating-star" data-rating="4"></i>
+                            <i class="far fa-star rating-star" data-rating="5"></i>
+                        </div>
+                        <textarea class="comment-input" id="comment-input" placeholder="Escribe tu reseña aquí..."></textarea>
+                        <button class="submit-review-btn" id="submit-review-btn" disabled>Publicar reseña</button>
+                    </div>
+                </div>
+                ` : `
+                <div class="user-review-notice">
+                    <i class="fas fa-info-circle"></i> Ya has publicado una reseña para este estudio.
+                </div>
+                `}
+                
                 <div class="reviews-grid" id="reviews-container">
-                    ${studio.reviews && studio.reviews.length > 0 ? 
-                        studio.reviews.map(review => `
-                            <div class="review-card">
-                                <div class="review-header">
-                                    <span class="review-author">${review.author}</span>
-                                    <span class="review-date">${new Date(review.date).toLocaleDateString('es-ES')}</span>
-                                </div>
-                                <div class="stars-small"></div>
-                                <div class="review-content">${review.comment}</div>
-                            </div>
-                        `).join('') : 
-                        '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No hay reseñas aún. Sé el primero en opinar.</p>'
+                    ${studioRating.reviewCount === 0 ? 
+                        '<div class="no-reviews"><i class="fas fa-comment-slash" style="font-size: 3rem; margin-bottom: 1rem;"></i><p>No hay reseñas aún. Sé el primero en opinar.</p></div>' : 
+                        ''
                     }
                 </div>
             </div>
         </div>
     `;
     
-    // Agregar estrellas dinámicamente
-    const starsLargeContainer = container.querySelector('.stars-large');
-    if (starsLargeContainer) {
-        const stars = createStars(studioRating.averageRating);
-        starsLargeContainer.appendChild(stars);
+    // Cargar reseñas existentes
+    loadReviews(studio.id);
+    
+    // Configurar eventos para el formulario de reseña si el usuario no ha reseñado
+    if (!userReview) {
+        setupReviewForm(studio.id);
     }
+}
+
+// Función para cargar las reseñas
+function loadReviews(studioId) {
+    const reviewsContainer = document.getElementById('reviews-container');
+    if (!reviewsContainer) return;
+    
+    const reviews = window.getStudioReviews ? window.getStudioReviews(studioId) : [];
+    
+    if (reviews.length === 0) return;
+    
+    let reviewsHTML = '';
+    
+    reviews.forEach(review => {
+        const isCurrentUser = review.userId === (window.getCurrentUserProfile ? window.getCurrentUserProfile().id : '');
+        
+        reviewsHTML += `
+            <div class="review-card" data-review-id="${review.id}">
+                <div class="review-header">
+                    <div class="review-author">
+                        <img src="${review.avatar}" alt="${review.username}" class="author-avatar">
+                        <div class="author-info">
+                            <span class="author-name">${review.username}</span>
+                            <span class="author-discord">${review.discord}</span>
+                        </div>
+                    </div>
+                    <span class="review-date">${new Date(review.date).toLocaleDateString('es-ES')}</span>
+                </div>
+                <div class="stars-small"></div>
+                <div class="review-content">${review.comment}</div>
+                ${isCurrentUser ? `
+                <div class="review-actions">
+                    <button class="delete-review-btn" onclick="deleteReview(${studioId}, ${review.id})">
+                        <i class="fas fa-trash"></i> Eliminar reseña
+                    </button>
+                </div>
+                ` : ''}
+            </div>
+        `;
+    });
+    
+    reviewsContainer.innerHTML = reviewsHTML;
     
     // Agregar estrellas a las reseñas
-    const reviewCards = container.querySelectorAll('.review-card');
+    const reviewCards = reviewsContainer.querySelectorAll('.review-card');
     reviewCards.forEach((card, index) => {
         const starsSmallContainer = card.querySelector('.stars-small');
-        if (starsSmallContainer && studio.reviews && studio.reviews[index]) {
-            const reviewStars = createStars(studio.reviews[index].rating);
+        if (starsSmallContainer && reviews[index]) {
+            const reviewStars = window.createStars ? window.createStars(reviews[index].rating) : document.createElement('div');
             starsSmallContainer.appendChild(reviewStars);
         }
     });
 }
 
-// Función para obtener reseñas del almacenamiento local
-function getLocalRatings() {
-    const stored = localStorage.getItem('reviewmc_ratings');
-    return stored ? JSON.parse(stored) : {};
+// Función para configurar el formulario de reseña
+function setupReviewForm(studioId) {
+    const ratingStars = document.querySelectorAll('.rating-star');
+    const commentInput = document.getElementById('comment-input');
+    const submitBtn = document.getElementById('submit-review-btn');
+    
+    let selectedRating = 0;
+    
+    // Configurar eventos para las estrellas
+    ratingStars.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            selectedRating = rating;
+            
+            // Actualizar visualización de estrellas
+            ratingStars.forEach((s, index) => {
+                if (index < rating) {
+                    s.classList.remove('far');
+                    s.classList.add('fas', 'active');
+                } else {
+                    s.classList.remove('fas', 'active');
+                    s.classList.add('far');
+                }
+            });
+            
+            // Habilitar botón si hay calificación y comentario
+            updateSubmitButton();
+        });
+        
+        star.addEventListener('mouseover', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            
+            ratingStars.forEach((s, index) => {
+                if (index < rating) {
+                    s.classList.remove('far');
+                    s.classList.add('fas');
+                } else {
+                    s.classList.remove('fas');
+                    s.classList.add('far');
+                }
+            });
+        });
+        
+        star.addEventListener('mouseout', function() {
+            ratingStars.forEach((s, index) => {
+                if (index < selectedRating) {
+                    s.classList.remove('far');
+                    s.classList.add('fas', 'active');
+                } else {
+                    s.classList.remove('fas', 'active');
+                    s.classList.add('far');
+                }
+            });
+        });
+    });
+    
+    // Configurar evento para el campo de comentario
+    commentInput.addEventListener('input', updateSubmitButton);
+    
+    // Configurar evento para el botón de enviar
+    submitBtn.addEventListener('click', function() {
+        if (selectedRating > 0 && commentInput.value.trim()) {
+            if (window.addReview) {
+                window.addReview(studioId, selectedRating, commentInput.value.trim());
+                
+                // Recargar la página para mostrar la nueva reseña
+                setTimeout(() => {
+                    loadStudioDetail();
+                }, 500);
+            } else {
+                alert('Error: No se pudo agregar la reseña. Función no disponible.');
+            }
+        }
+    });
+    
+    function updateSubmitButton() {
+        submitBtn.disabled = !(selectedRating > 0 && commentInput.value.trim());
+    }
 }
 
 // Cargar los detalles cuando el DOM esté listo
