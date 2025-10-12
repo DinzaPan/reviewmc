@@ -8,26 +8,13 @@ const studiosData = [
         description: "Especialistas en diseño web y desarrollo de aplicaciones modernas. Creamos experiencias digitales únicas que impulsan tu negocio.",
         customBackground: "./img/port/prueba.jpeg",
         hasCustomBg: true,
-        details: {
-            founded: "2020",
-            location: "Madrid, España",
-            specialties: ["Diseño Web", "Desarrollo App", "UI/UX"],
-            website: "https://megepixel.com"
-        },
-        reviews: [
-            {
-                author: "Ana García",
-                date: "2024-01-15",
-                rating: 5,
-                comment: "Excelente trabajo en nuestro sitio web. Muy profesionales y creativos."
-            },
-            {
-                author: "Carlos López",
-                date: "2024-01-10",
-                rating: 4,
-                comment: "Buen servicio, entrega puntual. Recomendado."
-            }
-        ]
+        socialLinks: {
+            discord: "https://discord.gg/megepixel",
+            whatsapp: "https://wa.me/123456789",
+            tiktok: "https://tiktok.com/@megepixel",
+            youtube: "https://youtube.com/c/megepixel",
+            twitter: "https://twitter.com/megepixel"
+        }
     },
     {
         id: 2,
@@ -37,20 +24,13 @@ const studiosData = [
         description: "Agencia de marketing digital especializada en estrategias de crecimiento y posicionamiento online para marcas.",
         customBackground: "./img/port/default.jpeg",
         hasCustomBg: false,
-        details: {
-            founded: "2019",
-            location: "Barcelona, España",
-            specialties: ["SEO", "Redes Sociales", "Email Marketing"],
-            website: "https://digitalcreations.com"
-        },
-        reviews: [
-            {
-                author: "María Rodríguez",
-                date: "2024-01-08",
-                rating: 5,
-                comment: "Increíble aumento en nuestro tráfico orgánico. Muy satisfechos."
-            }
-        ]
+        socialLinks: {
+            discord: false,
+            whatsapp: "https://wa.me/987654321",
+            tiktok: false,
+            youtube: "https://youtube.com/c/digitalcreations",
+            twitter: "https://twitter.com/digitalcreations"
+        }
     },
     {
         id: 3,
@@ -60,13 +40,13 @@ const studiosData = [
         description: "Consultoría tecnológica especializada en transformación digital y soluciones empresariales innovadoras.",
         customBackground: "./img/port/default.jpeg",
         hasCustomBg: false,
-        details: {
-            founded: "2018",
-            location: "Valencia, España",
-            specialties: ["Consultoría", "Cloud", "Ciberseguridad"],
-            website: "https://techsolutions.com"
-        },
-        reviews: []
+        socialLinks: {
+            discord: "https://discord.gg/techsolutions",
+            whatsapp: false,
+            tiktok: false,
+            youtube: false,
+            twitter: "https://twitter.com/techsolutions"
+        }
     }
 ];
 
@@ -79,6 +59,8 @@ const JSONBIN_CONFIG = {
 
 // Almacenamiento local para reseñas
 const STORAGE_KEY = "reviewmc_ratings";
+const USER_REVIEWS_KEY = "reviewmc_user_reviews";
+const STUDIO_REVIEWS_KEY = "reviewmc_reviews";
 
 // Función para obtener reseñas del almacenamiento local
 function getLocalRatings() {
@@ -89,6 +71,32 @@ function getLocalRatings() {
 // Función para guardar reseñas en el almacenamiento local
 function saveLocalRatings(ratings) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(ratings));
+}
+
+// Función para obtener reseñas de usuarios
+function getUserReviews() {
+    const stored = localStorage.getItem(USER_REVIEWS_KEY);
+    return stored ? JSON.parse(stored) : {};
+}
+
+// Función para guardar reseñas de usuarios
+function saveUserReviews(reviews) {
+    localStorage.setItem(USER_REVIEWS_KEY, JSON.stringify(reviews));
+}
+
+// Función para obtener reseñas de un estudio específico
+function getStudioReviews(studioId) {
+    const stored = localStorage.getItem(STUDIO_REVIEWS_KEY);
+    const allReviews = stored ? JSON.parse(stored) : {};
+    return allReviews[studioId] || [];
+}
+
+// Función para guardar reseñas de un estudio
+function saveStudioReviews(studioId, reviews) {
+    const stored = localStorage.getItem(STUDIO_REVIEWS_KEY);
+    const allReviews = stored ? JSON.parse(stored) : {};
+    allReviews[studioId] = reviews;
+    localStorage.setItem(STUDIO_REVIEWS_KEY, JSON.stringify(allReviews));
 }
 
 // Función para sincronizar con JSONBin.io
@@ -177,32 +185,123 @@ async function updateJsonBin(ratings) {
 }
 
 // Función para agregar una reseña
-async function addReview(studioId, rating) {
-    const localRatings = getLocalRatings();
+async function addReview(studioId, rating, comment) {
+    const userProfile = getCurrentUserProfile();
+    const userReviews = getUserReviews();
+    const studioReviews = getStudioReviews(studioId);
     
-    // Si el estudio no existe en las reseñas, lo creamos
-    if (!localRatings[studioId]) {
-        localRatings[studioId] = {
+    // Verificar si el usuario ya tiene una reseña para este estudio
+    if (userReviews[studioId]) {
+        alert('Ya has publicado una reseña para este estudio.');
+        return;
+    }
+    
+    // Crear nueva reseña
+    const newReview = {
+        id: Date.now(), // ID único basado en timestamp
+        userId: userProfile.id,
+        username: userProfile.username,
+        discord: userProfile.discord,
+        avatar: userProfile.avatar,
+        rating: rating,
+        comment: comment,
+        date: new Date().toISOString()
+    };
+    
+    // Guardar reseña del usuario
+    userReviews[studioId] = newReview.id;
+    saveUserReviews(userReviews);
+    
+    // Agregar reseña a las reseñas del estudio
+    studioReviews.push(newReview);
+    saveStudioReviews(studioId, studioReviews);
+    
+    // Actualizar calificaciones globales
+    const ratings = getLocalRatings();
+    
+    if (!ratings[studioId]) {
+        ratings[studioId] = {
             totalRating: 0,
             reviewCount: 0,
             averageRating: 0
         };
     }
     
-    // Actualizamos las estadísticas
-    localRatings[studioId].totalRating += rating;
-    localRatings[studioId].reviewCount += 1;
-    localRatings[studioId].averageRating = localRatings[studioId].totalRating / localRatings[studioId].reviewCount;
+    ratings[studioId].totalRating += rating;
+    ratings[studioId].reviewCount += 1;
+    ratings[studioId].averageRating = ratings[studioId].totalRating / ratings[studioId].reviewCount;
     
-    // Guardamos localmente
-    saveLocalRatings(localRatings);
+    saveLocalRatings(ratings);
     
     // Sincronizamos con JSONBin.io (en segundo plano)
     setTimeout(() => {
-        updateJsonBin(localRatings);
+        updateJsonBin(ratings);
     }, 0);
     
-    return localRatings[studioId];
+    return ratings[studioId];
+}
+
+// Función para eliminar una reseña
+function deleteReview(studioId, reviewId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta reseña?')) {
+        return;
+    }
+    
+    const userReviews = getUserReviews();
+    const studioReviews = getStudioReviews(studioId);
+    const ratings = getLocalRatings();
+    
+    // Encontrar la reseña a eliminar
+    const reviewIndex = studioReviews.findIndex(review => review.id === reviewId);
+    
+    if (reviewIndex === -1) {
+        alert('No se pudo encontrar la reseña.');
+        return;
+    }
+    
+    const reviewToDelete = studioReviews[reviewIndex];
+    
+    // Eliminar la reseña del estudio
+    studioReviews.splice(reviewIndex, 1);
+    saveStudioReviews(studioId, studioReviews);
+    
+    // Eliminar la referencia del usuario
+    delete userReviews[studioId];
+    saveUserReviews(userReviews);
+    
+    // Actualizar calificaciones globales
+    if (ratings[studioId]) {
+        ratings[studioId].totalRating -= reviewToDelete.rating;
+        ratings[studioId].reviewCount -= 1;
+        
+        if (ratings[studioId].reviewCount > 0) {
+            ratings[studioId].averageRating = ratings[studioId].totalRating / ratings[studioId].reviewCount;
+        } else {
+            ratings[studioId].averageRating = 0;
+        }
+        
+        saveLocalRatings(ratings);
+        
+        // Sincronizar con JSONBin.io si está disponible
+        setTimeout(() => {
+            updateJsonBin(ratings);
+        }, 0);
+    }
+    
+    // Recargar la página para reflejar los cambios
+    window.location.reload();
+}
+
+// Función para obtener el perfil del usuario actual
+function getCurrentUserProfile() {
+    // En una implementación real, esto vendría de la autenticación
+    // Por ahora, usamos datos fijos para demostración
+    return {
+        id: 'user123',
+        username: 'UsuarioEjemplo',
+        discord: 'usuario#1234',
+        avatar: './img/avatar-default.png'
+    };
 }
 
 // Función mejorada para crear estrellas
@@ -387,5 +486,10 @@ document.addEventListener('DOMContentLoaded', loadStudios);
 window.studiosData = studiosData;
 window.loadStudios = loadStudios;
 window.addReview = addReview;
+window.deleteReview = deleteReview;
 window.syncWithJsonBin = syncWithJsonBin;
 window.getLocalRatings = getLocalRatings;
+window.getUserReviews = getUserReviews;
+window.getStudioReviews = getStudioReviews;
+window.getCurrentUserProfile = getCurrentUserProfile;
+window.createStars = createStars;
