@@ -57,11 +57,11 @@ const studiosData = [
         customBackground: "./img/port/fon4.jpg",
         hasCustomBg: true,
         socialLinks: {
-            discord: "https://discord.gg/Ur3GKgpy?event=1424897733713592330",
+            discord: "https://discord.gg/jgFcukm2kh",
             whatsapp: false,
-            tiktok: false,
-            youtube: false,
-            twitter: false
+            tiktok: "https://www.tiktok.com/@galaxyeventscompany?_t=ZM-8yyw6tdJuRZ&_r=1",
+            youtube: "https://youtube.com/@galaxycompanymc?si=11uSSD-MDFH9nG2o",
+            twitter: "https://x.com/GalaxyCompania?t=DxAiSH6PoPOZn3GTBYF6pg&s=09"
         }
     }
 ];
