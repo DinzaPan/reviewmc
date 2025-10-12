@@ -51,6 +51,64 @@ function createSocialLinks(socialLinks) {
     return html;
 }
 
+// Función para verificar si el usuario está autenticado
+function isUserAuthenticated() {
+    const userProfile = window.getUserProfile ? window.getUserProfile() : null;
+    return userProfile && !userProfile.isDefault;
+}
+
+// Función para crear el formulario de reseña o botón de login
+function createReviewSection(studioId, userReview, userAuthenticated) {
+    if (userReview) {
+        return `
+            <div class="user-review-notice">
+                <i class="fas fa-info-circle"></i> Ya has publicado una reseña para este estudio.
+            </div>
+        `;
+    }
+    
+    if (!userAuthenticated) {
+        return `
+            <div class="login-required-section">
+                <div class="login-message">
+                    <i class="fab fa-discord login-icon"></i>
+                    <h3>Inicia sesión para publicar una reseña</h3>
+                    <p>Conecta con Discord para compartir tu opinión sobre este estudio.</p>
+                    <button class="login-discord-btn" onclick="loginWithDiscord()">
+                        <i class="fab fa-discord"></i> Iniciar sesión con Discord
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    return `
+        <div class="add-review-section">
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Añadir tu reseña</h3>
+            <div class="review-form">
+                <div class="rating-input" id="rating-input">
+                    <i class="far fa-star rating-star" data-rating="1"></i>
+                    <i class="far fa-star rating-star" data-rating="2"></i>
+                    <i class="far fa-star rating-star" data-rating="3"></i>
+                    <i class="far fa-star rating-star" data-rating="4"></i>
+                    <i class="far fa-star rating-star" data-rating="5"></i>
+                </div>
+                <textarea class="comment-input" id="comment-input" placeholder="Escribe tu reseña aquí..."></textarea>
+                <button class="submit-review-btn" id="submit-review-btn" disabled>Publicar reseña</button>
+            </div>
+        </div>
+    `;
+}
+
+// Función para iniciar sesión con Discord
+function loginWithDiscord() {
+    if (window.discordAuth && window.discordAuth.login) {
+        window.discordAuth.login();
+    } else {
+        alert('Error: No se pudo iniciar sesión. Intenta recargar la página.');
+    }
+}
+
 // Función para cargar los detalles del studio
 async function loadStudioDetail() {
     const container = document.getElementById('studio-detail-container');
@@ -100,6 +158,9 @@ async function loadStudioDetail() {
     const userReviews = window.getUserReviews ? window.getUserReviews() : {};
     const userReview = userReviews[studio.id];
     
+    // Verificar si el usuario está autenticado
+    const userAuthenticated = isUserAuthenticated();
+    
     // Actualizar la URL con el nombre del studio
     updatePageUrl(studio.name, studio.id);
     
@@ -135,27 +196,7 @@ async function loadStudioDetail() {
         <div class="reviews-section">
             <h2 class="section-title">Reseñas de la Comunidad</h2>
             
-            ${!userReview ? `
-            <!-- Add Review Section -->
-            <div class="add-review-section">
-                <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Añadir tu reseña</h3>
-                <div class="review-form">
-                    <div class="rating-input" id="rating-input">
-                        <i class="far fa-star rating-star" data-rating="1"></i>
-                        <i class="far fa-star rating-star" data-rating="2"></i>
-                        <i class="far fa-star rating-star" data-rating="3"></i>
-                        <i class="far fa-star rating-star" data-rating="4"></i>
-                        <i class="far fa-star rating-star" data-rating="5"></i>
-                    </div>
-                    <textarea class="comment-input" id="comment-input" placeholder="Escribe tu reseña aquí..."></textarea>
-                    <button class="submit-review-btn" id="submit-review-btn" disabled>Publicar reseña</button>
-                </div>
-            </div>
-            ` : `
-            <div class="user-review-notice">
-                <i class="fas fa-info-circle"></i> Ya has publicado una reseña para este estudio.
-            </div>
-            `}
+            ${createReviewSection(studio.id, userReview, userAuthenticated)}
             
             <div class="reviews-grid" id="reviews-container">
                 <div class="loading-detail">
@@ -169,8 +210,8 @@ async function loadStudioDetail() {
     // Cargar reseñas existentes desde JSONBin.io
     await loadReviews(studio.id);
     
-    // Configurar eventos para el formulario de reseña si el usuario no ha reseñado
-    if (!userReview) {
+    // Configurar eventos para el formulario de reseña si el usuario está autenticado y no ha reseñado
+    if (userAuthenticated && !userReview) {
         setupReviewForm(studio.id);
     }
 }
@@ -402,6 +443,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Escuchar cambios en la autenticación
     document.addEventListener('authStateChanged', function() {
         updateNavbarProfile();
+        // Recargar la sección de reseñas cuando cambie el estado de autenticación
+        const params = getUrlParams();
+        if (params.id) {
+            const container = document.getElementById('studio-detail-container');
+            if (container) {
+                loadStudioDetail();
+            }
+        }
     });
     
     // Esperar a que studiosData esté disponible
@@ -444,3 +493,5 @@ window.loadReviews = loadReviews;
 window.deleteUserReview = deleteUserReview;
 window.updateNavbarProfile = updateNavbarProfile;
 window.updatePageUrl = updatePageUrl;
+window.loginWithDiscord = loginWithDiscord;
+window.isUserAuthenticated = isUserAuthenticated;
