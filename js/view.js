@@ -85,27 +85,24 @@ async function loadStudioDetail() {
     const userReviews = window.getUserReviews ? window.getUserReviews() : {};
     const userReview = userReviews[studio.id];
     
-    // Crear el HTML de los detalles SIN TARJETAS
+    // Crear el HTML de los detalles SIN TARJETAS GRANDES
     container.innerHTML = `
-        <!-- Hero Section - Sin tarjeta -->
-        <div class="studio-hero" id="studio-hero">
-            <div class="studio-overlay"></div>
-            <div class="studio-hero-content">
-                <img src="${studio.image}" alt="${studio.name}" class="studio-image-large"
-                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiByeD0iMjAiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xNTBfMTUwKSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzE1MF8xNTAiIHgxPSIwIiB5MT0iMCIgeDI9IjE1MCIgeTI9IjE1MCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMDZCNkQ0Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0Y1OUUwQiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo='">
-                <div class="studio-info-hero">
-                    <h1 class="studio-name-large">${studio.name}</h1>
-                    <div class="studio-category-large">${studio.category}</div>
-                    <div class="rating-section">
-                        <i class="fas fa-star rating-icon"></i>
-                        <span class="rating-value-large">${studioRating.averageRating.toFixed(1)}</span>
-                        <span class="review-count-large">${studioRating.reviewCount} reseñas</span>
-                    </div>
+        <!-- Studio Header - Solo logo e info -->
+        <div class="studio-header">
+            <img src="${studio.image}" alt="${studio.name}" class="studio-image-large"
+                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiByeD0iMTUiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xMjBfMTIwKSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzEyMF8xMjAiIHgxPSIwIiB5MT0iMCIgeDI9IjEyMCIgeTI9IjEyMCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMDZCNkQ0Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0Y1OUUwQiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo='">
+            <div class="studio-info">
+                <h1 class="studio-name-large">${studio.name}</h1>
+                <div class="studio-category-large">${studio.category}</div>
+                <div class="rating-section">
+                    <i class="fas fa-star rating-icon"></i>
+                    <span class="rating-value-large">${studioRating.averageRating.toFixed(1)}</span>
+                    <span class="review-count-large">${studioRating.reviewCount} reseñas</span>
                 </div>
             </div>
         </div>
         
-        <!-- Description Section - Sin tarjeta -->
+        <!-- Description Section -->
         <div class="studio-description-section">
             <h2 class="section-title">Descripción</h2>
             <div class="studio-description">
@@ -116,14 +113,14 @@ async function loadStudioDetail() {
             ${createSocialLinks(studio.socialLinks)}
         </div>
         
-        <!-- Reviews Section - Sin tarjeta -->
+        <!-- Reviews Section -->
         <div class="reviews-section">
             <h2 class="section-title">Reseñas de la Comunidad</h2>
             
             ${!userReview ? `
-            <!-- Add Review Section - Con fondo pero sin tarjeta -->
+            <!-- Add Review Section -->
             <div class="add-review-section">
-                <h3 style="margin-bottom: 1.5rem; color: var(--text-primary); font-size: 1.5rem;">Añadir tu reseña</h3>
+                <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Añadir tu reseña</h3>
                 <div class="review-form">
                     <div class="rating-input" id="rating-input">
                         <i class="far fa-star rating-star" data-rating="1"></i>
@@ -150,20 +147,6 @@ async function loadStudioDetail() {
             </div>
         </div>
     `;
-
-    // Configurar el fondo personalizado si existe
-    if (studio.hasCustomBg && studio.customBackground) {
-        const studioHero = document.getElementById('studio-hero');
-        const backgroundImg = document.createElement('img');
-        backgroundImg.src = studio.customBackground;
-        backgroundImg.alt = `${studio.name} Background`;
-        backgroundImg.className = 'studio-background';
-        backgroundImg.onerror = function() {
-            // Si falla la imagen de fondo, usar gradiente por defecto
-            studioHero.style.background = 'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(245, 158, 11, 0.2))';
-        };
-        studioHero.appendChild(backgroundImg);
-    }
     
     // Cargar reseñas existentes desde JSONBin.io
     await loadReviews(studio.id);
