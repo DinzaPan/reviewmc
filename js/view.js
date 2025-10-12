@@ -97,7 +97,7 @@ async function loadStudioDetail() {
                     <div class="rating-section">
                         <i class="fas fa-star rating-icon"></i>
                         <span class="rating-value-large">${studioRating.averageRating.toFixed(1)}</span>
-                        <span class="review-count-large">(${studioRating.reviewCount})</span>
+                        <span class="review-count-large">${studioRating.reviewCount} reseñas</span>
                     </div>
                 </div>
             </div>
@@ -175,6 +175,9 @@ async function loadReviews(studioId) {
         }
     }
     
+    // Ordenar reseñas por fecha (más recientes primero)
+    reviews.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
     if (reviews.length === 0) {
         reviewsContainer.innerHTML = `
             <div class="no-reviews">
@@ -204,11 +207,13 @@ async function loadReviews(studioId) {
                     </div>
                     <span class="review-date">${new Date(review.date).toLocaleDateString('es-ES')}</span>
                 </div>
-                <div class="stars-small"></div>
+                <div class="review-rating">
+                    ${window.createStars ? window.createStars(review.rating).outerHTML : ''}
+                </div>
                 <div class="review-content">${review.comment}</div>
                 ${isCurrentUser ? `
                 <div class="review-actions">
-                    <button class="delete-review-btn" onclick="deleteReview(${studioId}, ${review.id})">
+                    <button class="delete-review-btn" onclick="deleteUserReview(${studioId}, ${review.id})">
                         <i class="fas fa-trash"></i> Eliminar reseña
                     </button>
                 </div>
@@ -218,16 +223,6 @@ async function loadReviews(studioId) {
     });
     
     reviewsContainer.innerHTML = reviewsHTML;
-    
-    // Agregar estrellas a las reseñas
-    const reviewCards = reviewsContainer.querySelectorAll('.review-card');
-    reviewCards.forEach((card, index) => {
-        const starsSmallContainer = card.querySelector('.stars-small');
-        if (starsSmallContainer && reviews[index]) {
-            const reviewStars = window.createStars ? window.createStars(reviews[index].rating) : document.createElement('div');
-            starsSmallContainer.appendChild(reviewStars);
-        }
-    });
 }
 
 // Función para configurar el formulario de reseña
@@ -290,26 +285,52 @@ function setupReviewForm(studioId) {
     commentInput.addEventListener('input', updateSubmitButton);
     
     // Configurar evento para el botón de enviar
-    submitBtn.addEventListener('click', function() {
-        if (selectedRating > 0 && commentInput.value.trim()) {
-            if (window.addReview) {
-                window.addReview(studioId, selectedRating, commentInput.value.trim());
-                
-                // Mostrar mensaje de éxito
-                alert('¡Reseña publicada con éxito!');
-                
-                // Recargar la página para mostrar la nueva reseña
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            } else {
-                alert('Error: No se pudo agregar la reseña. Función no disponible.');
-            }
+    submitBtn.addEventListener('click', async function() {
+        if (selectedRating === 0 || !commentInput.value.trim()) {
+            alert('Por favor, selecciona una calificación y escribe un comentario.');
+            return;
+        }
+        
+        const userProfile = window.getUserProfile ? window.getUserProfile() : {};
+        
+        // Verificar si el usuario está autenticado
+        if (!userProfile || userProfile.isDefault) {
+            alert('Por favor, inicia sesión con Discord para publicar una reseña.');
+            return;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Publicando...';
+        
+        try {
+            // Agregar la reseña
+            await window.addReview(studioId, selectedRating, commentInput.value.trim());
+            
+            // Mostrar mensaje de éxito
+            alert('¡Reseña publicada con éxito!');
+            
+            // Recargar la página para mostrar la nueva reseña
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Error publicando reseña:', error);
+            alert('Error al publicar la reseña. Intenta nuevamente.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Publicar reseña';
         }
     });
     
     function updateSubmitButton() {
-        submitBtn.disabled = !(selectedRating > 0 && commentInput.value.trim());
+        submitBtn.disabled = selectedRating === 0 || !commentInput.value.trim();
+    }
+}
+
+// Función para eliminar reseña (global para acceso desde HTML)
+function deleteUserReview(studioId, reviewId) {
+    if (window.deleteReview) {
+        window.deleteReview(studioId, reviewId);
     }
 }
 
@@ -319,9 +340,11 @@ function updateNavbarProfile() {
     const profileCircle = document.querySelector('.profile-circle');
     
     if (userProfile && profileCircle) {
-        // Si el usuario tiene avatar, actualizar la imagen
+        // Limpiar el contenido existente
+        profileCircle.innerHTML = '';
+        
+        // Si el usuario tiene avatar y no es el por defecto, usar la imagen
         if (userProfile.avatar && !userProfile.isDefault) {
-            profileCircle.innerHTML = '';
             const avatarImg = document.createElement('img');
             avatarImg.src = userProfile.avatar;
             avatarImg.alt = userProfile.username;
@@ -334,6 +357,9 @@ function updateNavbarProfile() {
                 profileCircle.innerHTML = '<i class="fas fa-user"></i>';
             };
             profileCircle.appendChild(avatarImg);
+        } else {
+            // Usar ícono por defecto
+            profileCircle.innerHTML = '<i class="fas fa-user"></i>';
         }
         
         // Actualizar tooltip o información del perfil si existe
@@ -348,6 +374,11 @@ function updateNavbarProfile() {
 document.addEventListener('DOMContentLoaded', function() {
     // Actualizar perfil en la navbar
     updateNavbarProfile();
+    
+    // Escuchar cambios en la autenticación
+    document.addEventListener('authStateChanged', function() {
+        updateNavbarProfile();
+    });
     
     // Esperar a que studiosData esté disponible
     if (window.studiosData) {
@@ -383,6 +414,8 @@ window.addEventListener('error', function(e) {
     console.error('Error global:', e.error);
 });
 
-// Exportar funciones para uso global si es necesario
+// Exportar funciones para uso global
 window.loadStudioDetail = loadStudioDetail;
 window.loadReviews = loadReviews;
+window.deleteUserReview = deleteUserReview;
+window.updateNavbarProfile = updateNavbarProfile;
