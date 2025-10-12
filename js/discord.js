@@ -1,8 +1,8 @@
 // Sistema de autenticación con Discord para ReviewMC
 class DiscordAuth {
     constructor() {
-        this.clientId = '1397262934601896129'; // Reemplaza con tu Client ID de Discord
-        this.redirectUri = window.location.origin + '/callback.html'; // URL dinámica para callback
+        this.clientId = '1397262934601896129';
+        this.redirectUri = window.location.origin + '/callback.html';
         this.scope = 'identify email';
         this.token = null;
         this.user = null;
@@ -19,6 +19,9 @@ class DiscordAuth {
             this.token = savedToken;
             this.user = JSON.parse(savedUser);
             this.updateUI();
+            
+            // Actualizar perfil en el sistema de reseñas
+            this.updateReviewSystemProfile();
         }
         
         // Verificar si estamos en la página de callback
@@ -27,10 +30,20 @@ class DiscordAuth {
         }
     }
 
+    // Actualizar perfil en el sistema de reseñas
+    async updateReviewSystemProfile() {
+        if (this.user && this.token && window.updateProfileFromDiscord) {
+            try {
+                await window.updateProfileFromDiscord(this.user);
+                console.log('Perfil actualizado en el sistema de reseñas');
+            } catch (error) {
+                console.error('Error actualizando perfil:', error);
+            }
+        }
+    }
+
     // Manejar la página de callback
     handleCallbackPage() {
-        // Esta función se ejecuta solo en callback.html
-        // La lógica principal está en callback.html
         console.log('En página de callback de Discord');
     }
 
@@ -67,6 +80,9 @@ class DiscordAuth {
                 this.updateUI();
                 this.showNotification(`¡Bienvenido, ${this.user.username}!`, 'success');
                 
+                // Actualizar perfil en el sistema de reseñas
+                await this.updateReviewSystemProfile();
+                
                 // Disparar evento para que otros componentes se actualicen
                 document.dispatchEvent(new CustomEvent('authStateChanged'));
             } else {
@@ -87,6 +103,18 @@ class DiscordAuth {
         localStorage.removeItem('discord_user');
         this.updateUI();
         this.showNotification('Sesión cerrada correctamente', 'info');
+        
+        // Restablecer perfil por defecto en el sistema de reseñas
+        if (window.getUserProfile && window.saveUserProfile) {
+            const defaultProfile = {
+                id: 'user_' + Date.now(),
+                username: 'Usuario',
+                discord: 'usuario#0000',
+                avatar: './img/avatar-default.png',
+                isDefault: true
+            };
+            window.saveUserProfile(defaultProfile);
+        }
         
         // Disparar evento para que otros componentes se actualicen
         document.dispatchEvent(new CustomEvent('authStateChanged'));
@@ -177,6 +205,8 @@ class DiscordAuth {
             if (savedUser) {
                 this.user = JSON.parse(savedUser);
                 this.updateUI();
+                // Actualizar perfil en el sistema de reseñas
+                await this.updateReviewSystemProfile();
             } else {
                 // Si hay token pero no usuario, obtener el perfil
                 await this.fetchUserProfile();
