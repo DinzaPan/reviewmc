@@ -23,7 +23,7 @@ const studiosData = [
         category: "Event Creators",
         description: "Hola, somos SquareCraft Studio, una comunidad de Minecraft muy chula, en la cual te garantizamos una diversión sin fin, ¿Te gustaría participar en servidores y eventos increíbles? Pues este es tu sitio, contamos con un staff impresionante, cuidamos de cada detalle puesto en el desarrollo del servidor o evento¿Quieres que tús eventos o servidores sean lo mejor de lo mejor? Pues tambien puedes contratar nuestros servicios, con precios muy competitivos y una calidad impresionante, un trato increíble y unos servicios extra únicos y exclusivos solo para ti y tú comunidad",
         customBackground: "./img/port/fon2.jpg",
-        hasCustomBg: false,
+        hasCustomBg: true,
         socialLinks: {
             discord: "https://discord.gg/MPeG9AP4",
             whatsapp: false,
