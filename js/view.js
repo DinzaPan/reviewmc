@@ -85,13 +85,14 @@ async function loadStudioDetail() {
     const userReviews = window.getUserReviews ? window.getUserReviews() : {};
     const userReview = userReviews[studio.id];
     
-    // Crear el HTML de los detalles con el nuevo diseño de fondo
+    // Crear el HTML de los detalles SIN TARJETAS
     container.innerHTML = `
+        <!-- Hero Section - Sin tarjeta -->
         <div class="studio-hero" id="studio-hero">
             <div class="studio-overlay"></div>
             <div class="studio-hero-content">
                 <img src="${studio.image}" alt="${studio.name}" class="studio-image-large"
-                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQwIiBoZWlnaHQ9IjE0MCIgdmlld0JveD0iMCAwIDE0MCAxNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNDAiIGhlaWdodD0iMTQwIiByeD0iMjAiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xNDBfMTQwKSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzE0MF8xNDAiIHgxPSIwIiB5MT0iMCIgeDI9IjE0MCIgeTI9IjE0MCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMDZCNkQ0Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0Y1OUUwQiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo='">
+                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiByeD0iMjAiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xNTBfMTUwKSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzE1MF8xNTAiIHgxPSIwIiB5MT0iMCIgeDI9IjE1MCIgeTI9IjE1MCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMDZCNkQ0Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0Y1OUUwQiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo='">
                 <div class="studio-info-hero">
                     <h1 class="studio-name-large">${studio.name}</h1>
                     <div class="studio-category-large">${studio.category}</div>
@@ -104,6 +105,7 @@ async function loadStudioDetail() {
             </div>
         </div>
         
+        <!-- Description Section - Sin tarjeta -->
         <div class="studio-description-section">
             <h2 class="section-title">Descripción</h2>
             <div class="studio-description">
@@ -114,12 +116,14 @@ async function loadStudioDetail() {
             ${createSocialLinks(studio.socialLinks)}
         </div>
         
+        <!-- Reviews Section - Sin tarjeta -->
         <div class="reviews-section">
             <h2 class="section-title">Reseñas de la Comunidad</h2>
             
             ${!userReview ? `
+            <!-- Add Review Section - Con fondo pero sin tarjeta -->
             <div class="add-review-section">
-                <h3 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.4rem;">Añadir tu reseña</h3>
+                <h3 style="margin-bottom: 1.5rem; color: var(--text-primary); font-size: 1.5rem;">Añadir tu reseña</h3>
                 <div class="review-form">
                     <div class="rating-input" id="rating-input">
                         <i class="far fa-star rating-star" data-rating="1"></i>
