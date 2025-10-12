@@ -5,7 +5,7 @@ const studiosData = [
         name: "MegePixel",
         image: "./img/studios/studio1.jpg",
         category: "Diseño & Desarrollo",
-        description: "Especialistas en diseño web y desarrollo de aplicaciones modernas. Creamos experiencias digitales únicas que impulsan tu negocio.",
+        description: "Un Studio Dedicado al desarrollode paginas web, Desarrollode servidores de Minecraft Bedrock o java, Un studio que crea paginas o aplicaciones web.",
         customBackground: "./img/port/prueba.jpeg",
         hasCustomBg: true,
         socialLinks: {
