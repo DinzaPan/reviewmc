@@ -141,14 +141,31 @@ function saveStudioReviews(studioId, reviews) {
     localStorage.setItem(STUDIO_REVIEWS_KEY, JSON.stringify(allReviews));
 }
 
-// Función para sincronizar con JSONBin.io
+// Nueva estructura para JSONBin.io que incluye reseñas completas
+function getCompleteDataForJsonBin() {
+    const ratings = getLocalRatings();
+    const allStudioReviews = {};
+    
+    // Obtener todas las reseñas de todos los estudios
+    studiosData.forEach(studio => {
+        allStudioReviews[studio.id] = getStudioReviews(studio.id);
+    });
+    
+    return {
+        ratings: ratings,
+        reviews: allStudioReviews,
+        lastUpdated: new Date().toISOString()
+    };
+}
+
+// Función para sincronizar con JSONBin.io (ACTUALIZADA)
 async function syncWithJsonBin() {
     try {
-        // Primero obtenemos las reseñas locales
-        const localRatings = getLocalRatings();
+        // Obtenemos los datos completos (ratings + reseñas)
+        const localData = getCompleteDataForJsonBin();
         
-        // Si no hay reseñas locales, inicializamos con ceros
-        if (Object.keys(localRatings).length === 0) {
+        // Si no hay datos locales, inicializamos
+        if (Object.keys(localData.ratings).length === 0) {
             const initialRatings = {};
             studiosData.forEach(studio => {
                 initialRatings[studio.id] = {
@@ -157,11 +174,11 @@ async function syncWithJsonBin() {
                     averageRating: 0
                 };
             });
+            localData.ratings = initialRatings;
             saveLocalRatings(initialRatings);
-            return initialRatings;
         }
         
-        // Intentamos obtener las reseñas de JSONBin.io
+        // Intentamos obtener los datos de JSONBin.io
         const response = await fetch(`${JSONBIN_CONFIG.BASE_URL}/${JSONBIN_CONFIG.BIN_ID}/latest`, {
             method: 'GET',
             headers: {
@@ -170,63 +187,80 @@ async function syncWithJsonBin() {
             }
         });
         
-        if (!response.ok) {
-            throw new Error('Error al obtener datos de JSONBin.io');
+        let remoteData = { ratings: {}, reviews: {} };
+        
+        if (response.ok) {
+            const data = await response.json();
+            remoteData = data.record || { ratings: {}, reviews: {} };
         }
         
-        const data = await response.json();
-        const remoteRatings = data.record || {};
-        
-        // Fusionamos las reseñas (las locales tienen prioridad)
-        const mergedRatings = { ...remoteRatings, ...localRatings };
+        // Fusionamos los datos (las locales tienen prioridad)
+        const mergedData = {
+            ratings: { ...remoteData.ratings, ...localData.ratings },
+            reviews: { ...remoteData.reviews, ...localData.reviews },
+            lastUpdated: new Date().toISOString()
+        };
         
         // Aseguramos que todos los estudios tengan una entrada
         studiosData.forEach(studio => {
-            if (!mergedRatings[studio.id]) {
-                mergedRatings[studio.id] = {
+            if (!mergedData.ratings[studio.id]) {
+                mergedData.ratings[studio.id] = {
                     totalRating: 0,
                     reviewCount: 0,
                     averageRating: 0
                 };
             }
+            if (!mergedData.reviews[studio.id]) {
+                mergedData.reviews[studio.id] = [];
+            }
         });
         
-        // Guardamos localmente y en JSONBin.io
-        saveLocalRatings(mergedRatings);
-        await updateJsonBin(mergedRatings);
+        // Guardamos localmente
+        saveLocalRatings(mergedData.ratings);
         
-        return mergedRatings;
+        // Guardamos las reseñas localmente
+        Object.keys(mergedData.reviews).forEach(studioId => {
+            saveStudioReviews(parseInt(studioId), mergedData.reviews[studioId]);
+        });
+        
+        // Actualizamos JSONBin.io con datos completos
+        await updateJsonBin(mergedData);
+        
+        return mergedData.ratings;
         
     } catch (error) {
         console.error('Error sincronizando con JSONBin.io:', error);
-        // En caso de error, usamos solo las reseñas locales
+        // En caso de error, usamos solo los datos locales
         return getLocalRatings();
     }
 }
 
-// Función para actualizar JSONBin.io
-async function updateJsonBin(ratings) {
+// Función para actualizar JSONBin.io (ACTUALIZADA)
+async function updateJsonBin(data) {
     try {
         const response = await fetch(`${JSONBIN_CONFIG.BASE_URL}/${JSONBIN_CONFIG.BIN_ID}`, {
             method: 'PUT',
             headers: {
                 'X-Master-Key': JSONBIN_CONFIG.API_KEY,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Bin-Versioning': 'false'
             },
-            body: JSON.stringify(ratings)
+            body: JSON.stringify(data)
         });
         
         if (!response.ok) {
             throw new Error('Error al actualizar JSONBin.io');
         }
         
-        console.log('Datos actualizados en JSONBin.io correctamente');
+        console.log('Datos completos actualizados en JSONBin.io correctamente');
+        return true;
     } catch (error) {
         console.error('Error actualizando JSONBin.io:', error);
+        return false;
     }
 }
 
-// Función para agregar una reseña
+// Función para agregar una reseña (ACTUALIZADA)
 async function addReview(studioId, rating, comment) {
     const userProfile = getUserProfile();
     const userReviews = getUserReviews();
@@ -275,15 +309,18 @@ async function addReview(studioId, rating, comment) {
     
     saveLocalRatings(ratings);
     
-    // Sincronizamos con JSONBin.io (en segundo plano)
+    // Preparar datos completos para JSONBin.io
+    const completeData = getCompleteDataForJsonBin();
+    
+    // Sincronizamos con JSONBin.io (en segundo plano) con datos completos
     setTimeout(() => {
-        updateJsonBin(ratings);
+        updateJsonBin(completeData);
     }, 0);
     
     return ratings[studioId];
 }
 
-// Función para eliminar una reseña
+// Función para eliminar una reseña (ACTUALIZADA)
 function deleteReview(studioId, reviewId) {
     if (!confirm('¿Estás seguro de que quieres eliminar esta reseña?')) {
         return;
@@ -324,14 +361,43 @@ function deleteReview(studioId, reviewId) {
         
         saveLocalRatings(ratings);
         
-        // Sincronizar con JSONBin.io si está disponible
+        // Preparar datos completos para JSONBin.io
+        const completeData = getCompleteDataForJsonBin();
+        
+        // Sincronizar con JSONBin.io con datos actualizados
         setTimeout(() => {
-            updateJsonBin(ratings);
+            updateJsonBin(completeData);
         }, 0);
     }
     
     // Recargar la página para reflejar los cambios
     window.location.reload();
+}
+
+// Función para cargar reseñas desde JSONBin.io (NUEVA)
+async function loadReviewsFromJsonBin(studioId) {
+    try {
+        const response = await fetch(`${JSONBIN_CONFIG.BASE_URL}/${JSONBIN_CONFIG.BIN_ID}/latest`, {
+            method: 'GET',
+            headers: {
+                'X-Master-Key': JSONBIN_CONFIG.API_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al obtener datos de JSONBin.io');
+        }
+        
+        const data = await response.json();
+        const remoteData = data.record || { reviews: {} };
+        
+        return remoteData.reviews[studioId] || [];
+        
+    } catch (error) {
+        console.error('Error cargando reseñas desde JSONBin.io:', error);
+        return getStudioReviews(studioId); // Fallback a local
+    }
 }
 
 // Función mejorada para crear estrellas
@@ -488,7 +554,7 @@ async function loadStudios() {
     container.innerHTML = '<div class="loading-text">Cargando negocios...</div>';
     
     try {
-        // Obtener reseñas sincronizadas
+        // Obtener reseñas sincronizadas (ahora incluye reseñas completas)
         const ratings = await syncWithJsonBin();
         
         // Limpiar contenedor
@@ -524,3 +590,4 @@ window.getStudioReviews = getStudioReviews;
 window.getUserProfile = getUserProfile;
 window.updateProfileFromDiscord = updateProfileFromDiscord;
 window.createStars = createStars;
+window.loadReviewsFromJsonBin = loadReviewsFromJsonBin;
